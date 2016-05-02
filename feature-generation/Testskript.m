@@ -22,16 +22,20 @@ nfft = wlen;
 S=size(stft);
 k=floor(wlen/10);%die Halbwertssamplelänge (mind. wlen/2)
 rstft=reduce(stft,k);
-size(rstft)
-csvwrite('features.csv',abs(stft'));
-stft=reproduce(rstft,k,S(1));
 Reduktionsfaktor=length(rstft(:,1))/S(1)
 
-%Spektrogramm erzeugen
-MyDisplaySpectrogram(abs(stft'), fs, h);
+%Schreibe Feature in csv-file
+csvwrite('features.csv',abs(rstft));
 
+%Rekonstruiere stft
+stft=reproduce(rstft,k,S(1));
+
+%Spektrogramm erzeugen
+MyDisplaySpectrogram(abs(stft), fs, h);
 
 %Spektrogramminversion
 [x_istft, t_istft] = istft(stft, h, nfft, fs);
+
+%Spiele spektrogramminvertiertes Signal ab
 sound(x_istft,fs);
 
