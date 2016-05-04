@@ -1,10 +1,9 @@
 
 function MyDisplaySpectrogram(spec, fs, frameStep)
-%Spec - enthält die positiven Frequenzen, egal ob komplex oder nur Amplitude
 [windowSize,frameCount] = size(spec);
-freqs = (0:windowSize)*fs/((windowSize-1)*2);%fs/fftSize=Frequenzunschärfe pro fftSample
+freqs = (0:windowSize)*fs/fftSize;%fs/fftSize=Frequenzunschärfe pro fftSample
 times = (1:frameCount) * frameStep/fs;%frameStep/fs=Timestep pro frame
-magSpec = abs(spec);
+magSpec = spec(1:windowSize+1,:);
 imagesc(times, freqs, magSpec);
 axis xy
 

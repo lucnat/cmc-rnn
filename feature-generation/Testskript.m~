@@ -6,28 +6,25 @@ clear, clc, close all
 % k, der Redundanzentferner scaled logarithmisch
 
 %einlesen und resampeln
-[y,Fs] = audioread('Bach1.mp3', [10000,600000]);
+[y,Fs] = audioread('Bach1.mp3', [100000,700000]);
 y=sum(y,2);
-fs=20000;
+fs=2^14;
 y=resample(y,fs,Fs);
 %sound(y,fs);
 
 %STFT erzeugen
-frametime=0.1; %zeitliche Auflösung in Sekunden
-overlap=0.8; %Überlappung der frames
-wlen = fs*frametime;
-h = floor(wlen*(1-overlap));
+wlen = 2^11;
+h = floor(wlen/4);
 nfft = wlen;
+posfreqlength= floor(nfft/2);
 [stft, f, t] = stft(y, wlen, h, nfft, fs);
-
-
+posfreq=stft(1:posfreqlength+1,:);
 
 %Psychoakustische Redundanz entfernen
-S=size(stft);
-k=floor(wlen/20);%die Halbwertssamplelänge (max. wlen/2)
-rstft=reduce(stft,k);
-Groesse=size(rstft)
-Reduktionsfaktor=length(rstft(:,1))/S(1)
+% S=size(stft);
+% k=floor(wlen/10);%die Halbwertssamplelänge (max. wlen/2)
+% rstft=reduce(stft,k);
+% Reduktionsfaktor=length(rstft(:,1))/S(1)
 
 %Schreibe Feature in csv-file
 csvwrite('features.csv',abs(rstft));
@@ -36,8 +33,7 @@ csvwrite('features.csv',abs(rstft));
 stft=reproduce(rstft,k,S(1));
 
 %Spektrogramm erzeugen
-imagesc(t, f, abs(stft));
-axis xy
+MyDisplaySpectrogram(realfreqamp, fs, h);
 
 %Spektrogramminversion
 [x_istft, t_istft] = istft(stft, h, nfft, fs);
