@@ -7,7 +7,7 @@ import csv
 from tabulate import tabulate
 
 # data I/O
-file = csv.reader(open('bounce.csv','r'))
+file = csv.reader(open('features.csv','r'))
 features = []
 for row in file:
   featuresRow = []
@@ -43,6 +43,7 @@ def lossFun(inputs, targets, hprev):
   loss = 0
   # forward pass
   for t in xrange(len(inputs)):
+    print 't = %d ' % (t)
     xs[t] = np.array([inputs[t]]).T
     hs[t] = np.tanh(np.dot(Wxh, xs[t]) + np.dot(Whh, hs[t-1]) + bh) # hidden layer activations
     ys[t] = np.dot(Why, hs[t]) + by # predictions
@@ -76,7 +77,7 @@ def sample(h, seed, n):
     y = np.dot(Why, h) + by
     samples.append(y.T[0])
     x = y
-  print tabulate(np.round(samples,4))
+  # print tabulate(np.round(samples,4))
 
 n, p = 0, 0
 mWxh, mWhh, mWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
