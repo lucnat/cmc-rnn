@@ -7,7 +7,7 @@ import csv
 from tabulate import tabulate
 
 # data I/O
-file = csv.reader(open('features.csv','r'))
+file = csv.reader(open('cyclic.csv','r'))
 features = []
 for row in file:
   featuresRow = []
@@ -23,7 +23,7 @@ print 'data has %d frames, %d samples.' % (amountOfFrames, amountOfSamples)
 # hyperparameters
 hidden_size = 100 # size of hidden layer of neurons
 seq_length = 25 # number of steps to unroll the RNN for
-learning_rate = 1e-2
+learning_rate = 1e-1
 
 # model parameters
 Wxh = np.random.randn(hidden_size, amountOfSamples)*0.01 # input to hidden
@@ -34,7 +34,7 @@ by = np.zeros((amountOfSamples, 1)) # output bias
 
 def lossFun(inputs, targets, hprev):
   """
-  inputs,targets are both list of integers.
+  inputs,targets are arrays that contain 25 frames.
   hprev is Hx1 array of initial hidden state
   returns the loss, gradients on model parameters, and last hidden state
   """
@@ -43,7 +43,6 @@ def lossFun(inputs, targets, hprev):
   loss = 0
   # forward pass
   for t in xrange(len(inputs)):
-    print 't = %d ' % (t)
     xs[t] = np.array([inputs[t]]).T
     hs[t] = np.tanh(np.dot(Wxh, xs[t]) + np.dot(Whh, hs[t-1]) + bh) # hidden layer activations
     ys[t] = np.dot(Why, hs[t]) + by # predictions
@@ -77,7 +76,7 @@ def sample(h, seed, n):
     y = np.dot(Why, h) + by
     samples.append(y.T[0])
     x = y
-  # print tabulate(np.round(samples,4))
+  print tabulate(np.round(samples,4))
 
 n, p = 0, 0
 mWxh, mWhh, mWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
@@ -85,19 +84,27 @@ mbh, mby = np.zeros_like(bh), np.zeros_like(by) # memory variables for Adagrad
 smooth_loss = -np.log(1.0/amountOfSamples)*seq_length # loss at iteration 0
 hprev = np.zeros((hidden_size,1)) # reset RNN memory
 
+def humanizeLargeArray(A):
+  smallerA = []
+  for i in xrange(0,10):
+    smallerA.append(A[i][0:10])
+  return smallerA
+
 while True:
   # prepare inputs (we're sweeping from left to right in steps seq_length long)
-  if p+seq_length+1 >= amountOfSamples or n == 0: 
+  if p+seq_length+1 >= amountOfFrames or n == 0: 
     p = 0 # go from start of data
+    hprev = np.zeros((hidden_size,1)) # reset RNN memory
+
   inputs = features[p:p+seq_length]
-  targets = features[p+1:seq_length+1]
+  targets = features[p+1:p+seq_length+1]
 
   # forward seq_length characters through the net and fetch gradient
   loss, dWxh, dWhh, dWhy, dbh, dby, hprev = lossFun(inputs, targets, hprev)
   smooth_loss = smooth_loss * 0.999 + loss * 0.001
-  if n % 10 == 0: 
-    print 'iter %d, loss: %f' % (n, smooth_loss) # print progress
-    sample(hprev,features[0],28)
+  if n % 100 == 0: 
+    print 'iter %d, loss: %f, pointer: %d' % (n, smooth_loss, p) # print progress
+    sample(hprev,features[p],5)
 
   # perform parameter update with Adagrad
   for param, dparam, mem in zip([Wxh, Whh, Why, bh, by], 
