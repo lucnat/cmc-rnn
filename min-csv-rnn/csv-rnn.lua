@@ -2,7 +2,7 @@
 
 function readCSV(file)
 	-- Reads a csv file with comma delimiter and returns resulting tensor
-	local csvFile = io.open('cyclic.csv', 'r')
+	local csvFile = io.open(file, 'r')
 	local firstLine = csvFile:read():split(',')
 	local m = table.getn(firstLine)
 	local N = csvFile:seek("end")/(2*m)
@@ -72,7 +72,7 @@ function lossFunction(inputs, targets, hprev)
 		dWhy 	= dWhy + torch.ger(dy,hs[t])
 		dby 	= dby + dy
 		dh 		= Why:t() * dy + dhnext 	-- backprop into h
-		dhraw 	= dh * (1 - hs[t] * hs[t])  -- backprop through tanh nonlinearity
+		dhraw	= torch.cmul(dh, torch.pow(hs[t],2)*(-1)+1) -- backprop through tanh nonlinearity
 		dbh		= dbh + dhraw
 		dWxh 	= dWxh + torch.ger(dhraw,xs[t])
 		dWhh 	= dWhh + torch.ger(dhraw,hs[t-1])
@@ -89,10 +89,18 @@ function lossFunction(inputs, targets, hprev)
 	return loss, dWxh, dWhh, dWhy, dbh, dby, hs[seq_length+1]
 end
 
-function sample(seed, hprev, N)
+function sample(seed, h, amount)
 	-- samples N vectors based on seed and hprev
-
-	return
+	local samples = torch.zeros(amount+1,m)
+	samples[1] = seed
+	x = seed
+	for i=2,amount+1 do
+		h = torch.tanh(Wxh*x + Whh*h + bh)
+		local y = Why*h + by
+		samples[i] = y
+		x = y
+	end
+	return samples
 end
 
 function clip(element)
@@ -105,6 +113,13 @@ function clip(element)
 	else 
 		return element
 	end
+end
+
+function adagrad(Parameter, dParameter, Memory)
+	-- performs adagrad on these tensors. Changes Param and Memory
+	Memory = Memory + torch.cmul(dParameter,dParameter)
+	Parameter = Parameter - torch.cdiv(dParameter,torch.sqrt(Memory + 1e-8))*learning_rate
+	return Parameter, Memory
 end
 
 
@@ -120,39 +135,32 @@ mby = 	torch.zeros(m)
 
 smooth_loss = -math.log(1.0/m)*seq_length
 hprev = torch.zeros(hidden_size) 
-
- while true do
-
+loss = 100
+for i=1,5000 do
 	-- check if we are at the end of training data
 	if p + seq_length + 1 >= N or n == 0 then
 		p = 1
+		hprev = torch.zeros(hidden_size)
 	end
 
 	inputs = X:sub(p, p+seq_length-1)
 	targets = X:sub(p+1, p+seq_length)
 
-	-- print('inputs')
-	-- print(inputs)
-	-- print('targets')
-	-- print(targets)
+	if n % 100 == 0 then
+		print('iter: '.. n ..', loss: '.. loss ..', pointer: '.. p) -- print progress
+		local samples = sample(inputs[1],hprev,20)
+	end
 
 	loss, dWxh, dWhh, dWhy, dbh, dby, hprev = lossFunction(inputs, targets, hprev)
 	smooth_loss = smooth_loss * 0.999 + loss * 0.001
 
-	if n % 100 == 0 then
-		print('iter: '.. n ..', loss: '.. smooth_loss ..', pointer: '.. p) -- print progress
-		-- sample(hprev,features[p],5)
-	end
+  	Wxh, mWxh = adagrad(Wxh, dWxh, mWxh)
+  	Whh, mWhh = adagrad(Whh, dWhh, mWhh)
+  	Why, mWhy = adagrad(Why, dWhy, mWhy)
+  	bh, mbh = adagrad(bh, dbh, mbh)
+  	by, mby = adagrad(by, dby, mby)
 
 	p = p + seq_length
 	n = n + 1
 
- end
-
-
-
-
-
-
-
-
+end

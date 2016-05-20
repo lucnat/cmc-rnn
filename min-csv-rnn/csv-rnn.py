@@ -7,7 +7,7 @@ import csv
 from tabulate import tabulate
 
 # data I/O
-file = csv.reader(open('bounce.csv','r'))
+file = csv.reader(open('cyclic.csv','r'))
 features = []
 for row in file:
   featuresRow = []
@@ -23,7 +23,7 @@ print 'data has %d frames, %d samples.' % (amountOfFrames, amountOfSamples)
 # hyperparameters
 hidden_size = 100 # size of hidden layer of neurons
 seq_length = 25 # number of steps to unroll the RNN for
-learning_rate = 1e-2
+learning_rate = 1e-1
 
 # model parameters
 Wxh = np.random.randn(hidden_size, amountOfSamples)*0.01 # input to hidden
@@ -76,12 +76,13 @@ def sample(h, seed, n):
     y = np.dot(Why, h) + by
     samples.append(y.T[0])
     x = y
-  # print tabulate(np.round(samples,4))
+  print tabulate(np.round(samples,4))
 
 n, p = 0, 0
 mWxh, mWhh, mWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
 mbh, mby = np.zeros_like(bh), np.zeros_like(by) # memory variables for Adagrad
 smooth_loss = -np.log(1.0/amountOfSamples)*seq_length # loss at iteration 0
+loss = 100
 hprev = np.zeros((hidden_size,1)) # reset RNN memory
 
 def humanizeLargeArray(A):
@@ -100,8 +101,8 @@ for i in xrange(5000):
   targets = features[p+1:p+seq_length+1]
 
   if n % 100 == 0: 
-    print 'iter %d, loss: %f, pointer: %d' % (n, smooth_loss, p) # print progress
-    sample(hprev,inputs[0],20)
+    print 'iter %d, loss: %f, pointer: %d' % (n, loss, p) # print progress
+    #sample(hprev,inputs[0],20)
 
   # forward seq_length characters through the net and fetch gradient
   loss, dWxh, dWhh, dWhy, dbh, dby, hprev = lossFun(inputs, targets, hprev)
@@ -116,6 +117,4 @@ for i in xrange(5000):
 
   p += seq_length # move data pointer
   n += 1 # iteration counter 
-
-
 
