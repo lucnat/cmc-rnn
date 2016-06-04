@@ -38,6 +38,7 @@ def lossFun(inputs, targets, hprev):
   hprev is Hx1 array of initial hidden state
   returns the loss, gradients on model parameters, and last hidden state
   """
+
   xs, hs, ys, ps, diff = {}, {}, {}, {}, {}
   hs[-1] = np.copy(hprev)
   loss = 0
@@ -64,6 +65,7 @@ def lossFun(inputs, targets, hprev):
     dWxh += np.dot(dhraw, xs[t].T)
     dWhh += np.dot(dhraw, hs[t-1].T)
     dhnext = np.dot(Whh.T, dhraw)
+
   for dparam in [dWxh, dWhh, dWhy, dbh, dby]:
     np.clip(dparam, -5, 5, out=dparam) # clip to mitigate exploding gradients
   return loss, dWxh, dWhh, dWhy, dbh, dby, hs[len(inputs)-1]
@@ -89,9 +91,9 @@ def humanizeLargeArray(A):
   smallerA = []
   for i in xrange(0,10):
     smallerA.append(A[i][0:10])
-  return smallerA
+  return smallerA  
 
-for i in xrange(5000):
+for i in xrange(1000):
   # prepare inputs (we're sweeping from left to right in steps seq_length long)
   if p+seq_length+1 >= amountOfFrames or n == 0: 
     p = 0 # go from start of data
@@ -100,20 +102,24 @@ for i in xrange(5000):
   inputs = features[p:p+seq_length]
   targets = features[p+1:p+seq_length+1]
 
-  if n % 100 == 0: 
-    print 'iter %d, loss: %f, pointer: %d' % (n, loss, p) # print progress
-    #sample(hprev,inputs[0],20)
+  #if n % 10 == 0: 
+  print 'iter %d, loss: %f, pointer: %d' % (n, loss, p) # print progress
+  #sample(hprev,inputs[0],20)
 
   # forward seq_length characters through the net and fetch gradient
   loss, dWxh, dWhh, dWhy, dbh, dby, hprev = lossFun(inputs, targets, hprev)
   smooth_loss = smooth_loss * 0.999 + loss * 0.001
 
   # perform parameter update with Adagrad
+  # print(bh, dbh)
+  # print('update...')
+
   for param, dparam, mem in zip([Wxh, Whh, Why, bh, by], 
                                 [dWxh, dWhh, dWhy, dbh, dby], 
                                 [mWxh, mWhh, mWhy, mbh, mby]):
     mem += dparam * dparam
     param += -learning_rate * dparam / np.sqrt(mem + 1e-8) # adagrad update
+  # print(bh, dbh)
 
   p += seq_length # move data pointer
   n += 1 # iteration counter 

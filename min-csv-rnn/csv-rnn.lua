@@ -20,7 +20,7 @@ function readCSV(file)
 	return X
 end
 
-X = readCSV('cyclic.csv') 	-- training data
+X = readCSV('bounce.csv') 	-- training data
 N = X:size(1) 				-- amount of frames
 m = X:size(2)				-- amount of samples
 
@@ -35,27 +35,26 @@ learning_rate 	= 1e-1
 Wxh = 	torch.rand(hidden_size,m)*0.01
 Whh = 	torch.rand(hidden_size,hidden_size)*0.01
 Why = 	torch.rand(m,hidden_size)*0.01
-bh = 	torch.rand(hidden_size)
-by = 	torch.rand(m)
+bh = 	torch.zeros(hidden_size)
+by = 	torch.zeros(m)
 
 function lossFunction(inputs, targets, hprev)
 	-- returns loss and gradients
 
 	-- wichtig: hs[t] entspricht dem hs[t-1] im python code
-	local xs 	= torch.zeros(seq_length+1, m)
+	local xs 	= torch.zeros(seq_length, m)
 	local hs 	= torch.zeros(seq_length+1, hidden_size)
-	local ys 	= torch.zeros(seq_length+1, m)
-	local diff 	= torch.zeros(seq_length+1, m)
+	local ys 	= torch.zeros(seq_length, m)
+	local diff 	= torch.zeros(seq_length, m)
 
 	hs[1] = hprev:clone()
 	local loss = 0
-
 	-- forward propagation
-	for t=2,seq_length+1 do
-		xs[t] 	= inputs[t-1]								-- fetch inputs
-		hs[t] 	= torch.tanh(Wxh*xs[t] + Whh*hs[t-1] + bh) 	-- hidden layer activations
-		ys[t] 	= Why*hs[t] + by							-- predictions
-		diff[t] = targets[t-1] - ys[t]						-- deltas
+	for t=1,seq_length do
+		xs[t] 	= inputs[t]									-- fetch inputs
+		hs[t+1] = torch.tanh(Wxh*xs[t] + Whh*hs[t] + bh) 	-- hidden layer activations
+		ys[t] 	= Why*hs[t+1] + by							-- predictions
+		diff[t] = targets[t] - ys[t]						-- deltas
 		loss 	= loss + diff[t]:dot(diff[t])				-- squared error
 	end
 
@@ -67,15 +66,15 @@ function lossFunction(inputs, targets, hprev)
 	local dby = 	torch.zeros(m)
 	local dhnext = 	torch.zeros(hidden_size) 
 
-	for t = seq_length+1,2,-1 do
-		dy 		= ys[t] - targets[t-1]
-		dWhy 	= dWhy + torch.ger(dy,hs[t])
+	for t = seq_length,1,-1 do
+		dy 		= ys[t] - targets[t]
+		dWhy 	= dWhy + torch.ger(dy,hs[t+1])
 		dby 	= dby + dy
 		dh 		= Why:t() * dy + dhnext 	-- backprop into h
-		dhraw	= torch.cmul(dh, torch.pow(hs[t],2)*(-1)+1) -- backprop through tanh nonlinearity
+		dhraw	= torch.cmul(dh, torch.pow(hs[t+1],2)*(-1)+1) -- backprop through tanh nonlinearity
 		dbh		= dbh + dhraw
 		dWxh 	= dWxh + torch.ger(dhraw,xs[t])
-		dWhh 	= dWhh + torch.ger(dhraw,hs[t-1])
+		dWhh 	= dWhh + torch.ger(dhraw,hs[t])
 		dhnext 	= Whh:t()*dhraw
 	end
 
@@ -105,7 +104,6 @@ end
 
 function clip(element)
 	-- clips element to stay between [-5,5]
-
 	if element > 5 then 
 		return 5
 	elseif element < -5 then 
@@ -122,7 +120,6 @@ function adagrad(Parameter, dParameter, Memory)
 	return Parameter, Memory
 end
 
-
 n = 0 -- iteration count
 p = 1 -- data pointer
 
@@ -136,7 +133,7 @@ mby = 	torch.zeros(m)
 smooth_loss = -math.log(1.0/m)*seq_length
 hprev = torch.zeros(hidden_size) 
 loss = 100
-for i=1,5000 do
+for i=1,1000 do
 	-- check if we are at the end of training data
 	if p + seq_length + 1 >= N or n == 0 then
 		p = 1
@@ -146,19 +143,24 @@ for i=1,5000 do
 	inputs = X:sub(p, p+seq_length-1)
 	targets = X:sub(p+1, p+seq_length)
 
-	if n % 100 == 0 then
-		print('iter: '.. n ..', loss: '.. loss ..', pointer: '.. p) -- print progress
-		local samples = sample(inputs[1],hprev,20)
+	if n % 10 == 0 then
+		print('iter: '.. n ..', loss: '.. loss ..', pointer '.. p) -- print progress
+		local samples = sample(inputs[1], hprev, 20)
+		print(samples)
 	end
 
 	loss, dWxh, dWhh, dWhy, dbh, dby, hprev = lossFunction(inputs, targets, hprev)
 	smooth_loss = smooth_loss * 0.999 + loss * 0.001
 
+	-- print(bh, dbh)
+	-- print('update...')
   	Wxh, mWxh = adagrad(Wxh, dWxh, mWxh)
   	Whh, mWhh = adagrad(Whh, dWhh, mWhh)
   	Why, mWhy = adagrad(Why, dWhy, mWhy)
   	bh, mbh = adagrad(bh, dbh, mbh)
   	by, mby = adagrad(by, dby, mby)
+	-- print(bh, dbh)
+
 
 	p = p + seq_length
 	n = n + 1
