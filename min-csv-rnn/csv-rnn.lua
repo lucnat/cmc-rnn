@@ -20,16 +20,16 @@ function readCSV(file)
 	return X
 end
 
-X = readCSV('bounce.csv') 	-- training data
+X = readCSV('Symbol.csv') 	-- training data
 N = X:size(1) 				-- amount of frames
 m = X:size(2)				-- amount of samples
 
 print('Data has ' .. N .. ' frames and ' .. m .. ' samples')
 
 -- hyperparameters
-hidden_size 	= 100
+hidden_size 	= 130
 seq_length 		= 25
-learning_rate 	= 1e-1
+learning_rate 	= 5e-2
 
 -- model parameters
 Wxh = 	torch.rand(hidden_size,m)*0.01
@@ -122,6 +122,7 @@ end
 
 n = 0 -- iteration count
 p = 1 -- data pointer
+cycles = 0
 
 -- memory variables for adagrad
 mWxh = 	torch.zeros(hidden_size,m)
@@ -133,36 +134,55 @@ mby = 	torch.zeros(m)
 smooth_loss = -math.log(1.0/m)*seq_length
 hprev = torch.zeros(hidden_size) 
 loss = 100
-for i=1,1000 do
+
+while true do
 	-- check if we are at the end of training data
 	if p + seq_length + 1 >= N or n == 0 then
 		p = 1
 		hprev = torch.zeros(hidden_size)
+		cycles = cycles + 1
 	end
 
 	inputs = X:sub(p, p+seq_length-1)
 	targets = X:sub(p+1, p+seq_length)
 
-	if n % 10 == 0 then
-		print('iter: '.. n ..', loss: '.. loss ..', pointer '.. p) -- print progress
-		local samples = sample(inputs[1], hprev, 20)
-		print(samples)
+	if n % 1 == 0 then
+		print('iter: '.. n ..', loss: '.. smooth_loss ..', pointer '.. p ..', cycles '..cycles)
 	end
 
 	loss, dWxh, dWhh, dWhy, dbh, dby, hprev = lossFunction(inputs, targets, hprev)
 	smooth_loss = smooth_loss * 0.999 + loss * 0.001
 
-	-- print(bh, dbh)
-	-- print('update...')
   	Wxh, mWxh = adagrad(Wxh, dWxh, mWxh)
   	Whh, mWhh = adagrad(Whh, dWhh, mWhh)
   	Why, mWhy = adagrad(Why, dWhy, mWhy)
   	bh, mbh = adagrad(bh, dbh, mbh)
   	by, mby = adagrad(by, dby, mby)
-	-- print(bh, dbh)
-
 
 	p = p + seq_length
 	n = n + 1
-
+	if cycles == 300 then
+		sampleInput = X[p]
+		break
+	end
 end
+
+function writeCSV(M)
+	local out = assert(io.open("./samples.csv", "w")) -- open a file for serialization
+	splitter = ","
+	for i=1,M:size(1) do
+	    for j=1,M:size(2) do
+	        out:write(M[i][j])
+	        if j == M:size(2) then
+	            out:write("\n")
+	        else
+	            out:write(splitter)
+	        end
+	    end
+	end
+	out:close()
+end
+
+local samples = sample(sampleInput, hprev, 400)
+
+writeCSV(samples)
