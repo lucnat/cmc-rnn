@@ -1,7 +1,7 @@
 clear, clc, close all
 %Designparameter:
 % fs, scled linear
-% wlen, beeinflusst Frequenzauflösung und somit die psychoakustische Redundanz
+% wlen, beeinflusst Frequenzaufl?sung und somit die psychoakustische Redundanz
 % h, der overlap scaled linear
 % k, der Redundanzentferner scaled logarithmisch
 
@@ -13,8 +13,8 @@ y=resample(y,fs,Fs);
 %sound(y,fs);
 
 %STFT erzeugen
-frametime=0.1; %zeitliche Auflösung in Sekunden
-overlap=0.8; %Überlappung der frames
+frametime=0.1; %zeitliche Aufl?sung in Sekunden
+overlap=0.8; %?berlappung der frames
 wlen = fs*frametime;
 h = floor(wlen*(1-overlap));
 nfft = wlen;
@@ -24,7 +24,7 @@ nfft = wlen;
 
 %Psychoakustische Redundanz entfernen
 S=size(stft);
-k=floor(wlen/20);%die Halbwertssamplelänge (max. wlen/2)
+k=floor(wlen/20);%die Halbwertssamplel?nge (max. wlen/2)
 rstft=reduce(stft,k);
 Groesse=size(rstft)
 Reduktionsfaktor=length(rstft(:,1))/S(1)
@@ -40,7 +40,7 @@ imagesc(t, f, abs(stft));
 axis xy
 
 %Spektrogramminversion
-[x_istft, t_istft] = istft(stft, h, nfft, fs);
+[x_istft, t_istft] = istft(abs(stft), h, nfft, fs);
 
 %Spiele spektrogramminvertiertes Signal ab
 sound(x_istft,fs);

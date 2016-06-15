@@ -20,14 +20,14 @@ function readCSV(file)
 	return X
 end
 
-X = readCSV('Symbol.csv') 	-- training data
+X = readCSV('Symbol.csv') 		-- training data
 N = X:size(1) 				-- amount of frames
 m = X:size(2)				-- amount of samples
 
 print('Data has ' .. N .. ' frames and ' .. m .. ' samples')
 
 -- hyperparameters
-hidden_size 	= 130
+hidden_size 	= 200
 seq_length 		= 25
 learning_rate 	= 5e-2
 
@@ -161,7 +161,7 @@ while true do
 
 	p = p + seq_length
 	n = n + 1
-	if cycles == 300 then
+	if cycles == 700 then
 		sampleInput = X[p]
 		break
 	end
