@@ -1,19 +1,20 @@
 require 'rnn'
 require 'CSV.lua'
 
-X = CSV.read('features.csv')     -- training data
+X = CSV.read('cyclic.csv')     -- training data
 
 -- hyper-parameters 
 batchSize = 1
 rho = 20 -- sequence length
-hiddenSize = 1000
+hiddenSize = 40
 inputDimension = X:size(2)
 lr = 0.1
+maxIt = 10000
 
 -- build simple recurrent neural network
 r = nn.Recurrent(
    hiddenSize,
-   nn.Linear(inputDimension, hiddenSize),       -- processes input Tensors
+   nn.Linear(inputDimension, hiddenSize),    -- processes input Tensors
    nn.Linear(hiddenSize, hiddenSize),        -- feedbacks the previous output Tensor
    nn.Sigmoid(),                             -- non-linear Module used to process the element-wise sum of the input and feedback module outputs
    rho                                       -- maximum amount of backpropagation steps to take back in time
@@ -73,7 +74,7 @@ while true do
    
    iteration = iteration + 1
 
-   if( iteration >= 3000) then
+   if( iteration >= maxIt) then
       break
    end
 
