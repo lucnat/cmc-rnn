@@ -11,6 +11,8 @@ inputDimension = X:size(2)
 lr = 0.1
 maxIt = 10000
 
+print('input dimension = '..inputDimension..' input size = '..X:size(1))
+
 -- build simple recurrent neural network
 r = nn.Recurrent(
    hiddenSize,
@@ -58,7 +60,7 @@ while true do
       err = err + criterion:forward(outputs[step], targets[step])
    end
 
-   print(string.format("Iteration %d ; loss = %f ", iteration, err))
+   print('Iteration = '..iteration..' loss = '..err)
 
    -- 3. backward sequence through rnn (i.e. backprop through time)
    

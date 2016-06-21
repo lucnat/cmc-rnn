@@ -5,11 +5,16 @@ CSV.read = function (path)
    -- Reads a csv file with comma delimiter and returns resulting tensor
    local csvFile = io.open(path, 'r')
    local firstLine = csvFile:read():split(',')
-   local m = table.getn(firstLine)
-   local N = csvFile:seek("end")/(2*m)
+   local m = #firstLine
+    
+   -- loop through file in order to get file length
    csvFile:seek("set")        -- restore position
-
-   local X = torch.zeros(N,m)
+   local amountOfLines = 0
+   for line in csvFile:lines('*l') do
+      amountOfLines = amountOfLines + 1
+   end
+   csvFile:seek("set")        -- restore position
+   local X = torch.zeros(amountOfLines,m)
    local i = 0
    for line in csvFile:lines('*l') do
       i = i + 1
