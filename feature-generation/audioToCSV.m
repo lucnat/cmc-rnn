@@ -43,5 +43,5 @@ axis xy
 [x_istft, t_istft] = istft(abs(stft), h, nfft, fs);
 
 %Spiele spektrogramminvertiertes Signal ab
-sound(x_istft,fs);
+%sound(x_istft,fs);
 

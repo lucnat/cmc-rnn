@@ -1,15 +1,20 @@
-f='samples.csv';
-FeatureMatrix=csvread('samples.csv',f);
+cd ..
+cd csv-rnn
+
+FeatureMatrix=csvread('samples.csv');
 size(FeatureMatrix)
+
+cd ..
+cd feature-generation
 
 %zeige smaples_Data
 figure(1)
 imagesc(FeatureMatrix)
 
 %Spektrogramminversion
-fs=20000;
+fs=3000;
 frametime=0.1; %zeitliche Auflösung in Sekunden
-overlap=0.8; %Überlappung der frames
+overlap=0.6; %Überlappung der frames
 
 
 wlen = fs*frametime;
@@ -20,3 +25,4 @@ nfft = wlen;
 
 %Spiele spektrogramminvertiertes Signal ab
 sound(x_istft,fs);
+
