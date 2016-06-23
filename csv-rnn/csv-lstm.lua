@@ -1,12 +1,12 @@
 require 'rnn'
 require 'CSV.lua'
 
-local X = CSV.read('cyclic.csv')     -- training data
+local X = CSV.read('bach.csv')     -- training data
 
 -- hyper-parameters 
  batchSize = 1
  rho = 10 -- sequence length
- hiddenSize = 30
+ hiddenSize = 100
  inputDimension = X:size(2)
  lr = 0.1
  maxIt = 200
@@ -23,6 +23,7 @@ else
 
    rnn = nn.Sequential()
       :add(nn.LSTM(inputDimension,hiddenSize,rho))
+      :add(nn.LSTM(hiddenSize,hiddenSize,rho))
       :add(nn.Linear(hiddenSize, inputDimension))
 
    -- wrap the non-recurrent module (Sequential) in Recursor.
@@ -35,13 +36,14 @@ end
  criterion = nn.MSECriterion()
 
  p = 1 -- data pointer
-
+ epoch = 1
 -- training
 
 iteration = 1
 while true do
    if(p+rho > X:size(1)) then
       p = 1
+      epoch = epoch + 1
    end
    local inputs, targets = {}, {} 
    for step=1,rho do
@@ -61,7 +63,7 @@ while true do
    end
    
    if iteration%1==0 then
-      print(string.format("Iteration %d ; loss = %f ; datapointer %d ", iteration, err,p))
+      print(string.format("Iteration %d ; loss %f ; epoch %d ", iteration, err,epoch))
    end
 
    -- 3. backward sequence through rnn (i.e. backprop through time)
@@ -100,5 +102,5 @@ end
 local seed = torch.rand(inputDimension) -- X[1]
 --local seed = X[1]
 local samples = sample(seed, 200)
--- print(samples)
+
 CSV.write(samples)
