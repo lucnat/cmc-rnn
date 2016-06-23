@@ -23,17 +23,17 @@ nfft = wlen;
 
 
 %Psychoakustische Redundanz entfernen
-S=size(stft);
-k=floor(wlen/20);%die Halbwertssamplel?nge (max. wlen/2)
-rstft=reduce(stft,k);
-Groesse=size(rstft)
-Reduktionsfaktor=length(rstft(:,1))/S(1)
+%S=size(stft);
+%k=floor(wlen/20);%die Halbwertssamplel?nge (max. wlen/2)
+%rstft=reduce(stft,k);
+%Groesse=size(rstft)
+%Reduktionsfaktor=length(rstft(:,1))/S(1)
 
 %Schreibe Feature in csv-file
-csvwrite('features.csv',abs(rstft));
+csvwrite('features.csv',transpose(abs(stft)));
 
 %Rekonstruiere stft
-stft=reproduce(rstft,k,S(1));
+%stft=reproduce(rstft,k,S(1));
 
 %Spektrogramm erzeugen
 imagesc(t, f, abs(stft));
