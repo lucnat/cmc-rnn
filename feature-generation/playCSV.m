@@ -1,5 +1,5 @@
 f='samples.csv';
-FeatureMatrix=csvread(strcat('/Users/Giaco/Desktop/cmc-rnn/csv-rnn/',f));
+FeatureMatrix=csvread('samples.csv',f);
 size(FeatureMatrix)
 
 %zeige smaples_Data
@@ -7,9 +7,11 @@ figure(1)
 imagesc(FeatureMatrix)
 
 %Spektrogramminversion
-fs=3000;
+fs=20000;
 frametime=0.1; %zeitliche Auflösung in Sekunden
-overlap=0.6; %Überlappung der frames
+overlap=0.8; %Überlappung der frames
+
+
 wlen = fs*frametime;
 h = floor(wlen*(1-overlap));
 nfft = wlen;
