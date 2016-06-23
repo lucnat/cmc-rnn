@@ -1,49 +1,59 @@
 require 'rnn'
 require 'CSV.lua'
 
-X = CSV.read('cyclic.csv')     -- training data
+local X = CSV.read('bounce.csv')     -- training data
 
 -- hyper-parameters 
-batchSize = 1
-rho = 20 -- sequence length
-hiddenSize = 40
-inputDimension = X:size(2)
-lr = 0.1
-maxIt = 10000
+local batchSize = 1
+local rho = 20 -- sequence length
+local hiddenSize = 40
+local inputDimension = X:size(2)
+local lr = 0.1
+local maxIt = 1000
+local flag=1
 
-print('input dimension = '..inputDimension..' input size = '..X:size(1))
+local rnn
 
--- build simple recurrent neural network
-r = nn.Recurrent(
-   hiddenSize,
-   nn.Linear(inputDimension, hiddenSize),    -- processes input Tensors
-   nn.Linear(hiddenSize, hiddenSize),        -- feedbacks the previous output Tensor
-   nn.Sigmoid(),                             -- non-linear Module used to process the element-wise sum of the input and feedback module outputs
-   rho                                       -- maximum amount of backpropagation steps to take back in time
-)
+print(string.format("InputDimesion %d ; InputSize = %d ", inputDimension, X:size(1)))
 
-rnn = nn.Sequential()
-   :add(r)
-   :add(nn.Linear(hiddenSize, inputDimension))
+if flag==1 then
+   -- load the model (importand to reinitialise the model or give a different model-name)
+   rnn = torch.load('flag_rnn.net')
+else
 
--- wrap the non-recurrent module (Sequential) in Recursor.
--- This makes it a recurrent module
--- i.e. Recursor is an AbstractRecurrent instance
-rnn = nn.Recursor(rnn, rho)
 
-print(rnn)
+   -- build simple recurrent neural network
+   local r = nn.Recurrent(
+      hiddenSize,
+      nn.Linear(inputDimension, hiddenSize),    -- processes input Tensors
+      nn.Linear(hiddenSize, hiddenSize),        -- feedbacks the previous output Tensor
+      nn.Tanh(),                             -- non-linear Module used to process the element-wise sum of the input and feedback module outputs
+      rho                                       -- maximum amount of backpropagation steps to take back in time
+   )
 
-criterion = nn.MSECriterion()
+   rnn = nn.Sequential()
+      :add(r)
+      :add(nn.Linear(hiddenSize, inputDimension))
 
-p = 1 -- data pointer
+   -- wrap the non-recurrent module (Sequential) in Recursor.
+   -- This makes it a recurrent module
+   -- i.e. Recursor is an AbstractRecurrent instance
+   rnn = nn.Recursor(rnn, rho)
+
+   --print(rnn)
+end
+
+local criterion = nn.MSECriterion()
+
+local p = 1 -- data pointer
 
 -- training
-iteration = 1
+local iteration = 1
 while true do
    if(p+rho > X:size(1)) then
       p = 1
    end
-   inputs, targets = {}, {} 
+   local inputs, targets = {}, {} 
    for step=1,rho do
       inputs[step] = X[p+step-1]
       targets[step] = X[p+step]
@@ -54,13 +64,15 @@ while true do
    
    rnn:zeroGradParameters() 
    rnn:forget() -- forget all past time-steps
-   outputs, err = {}, 0
+   local outputs, err = {}, 0
    for step=1,rho do
       outputs[step] = rnn:forward(inputs[step])
       err = err + criterion:forward(outputs[step], targets[step])
    end
-
-   print('Iteration = '..iteration..' loss = '..err)
+   
+   if iteration%100==0 then
+      print(string.format("Iteration %d ; loss = %f ; datapointer %d ", iteration, err,p))
+   end
 
    -- 3. backward sequence through rnn (i.e. backprop through time)
    
@@ -82,6 +94,10 @@ while true do
 
 end
 
+-- save the model
+torch.save('flag_rnn.net', rnn)
+
+
 function sample(seed, N)
    local samples = torch.zeros(N, inputDimension)
    samples[1] = rnn:forward(seed)
@@ -92,6 +108,7 @@ function sample(seed, N)
 end
 
 local seed = torch.rand(inputDimension) -- X[1]
-local samples = sample(seed, 300)
+--local seed = X[1]
+local samples = sample(seed, 200)
 -- print(samples)
 CSV.write(samples)
