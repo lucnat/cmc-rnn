@@ -3,7 +3,7 @@ require 'CSV.lua'
 
 --load the model
 local rnn = torch.load('flag_rnn.net')
-local X = CSV.read('features_short.csv')     -- training data
+local X = CSV.read('features_short.csv')   -- training data
 
 inputDimension = X:size(2)
 inputSize = X:size(1)
