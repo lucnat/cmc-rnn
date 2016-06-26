@@ -6,15 +6,15 @@ clear, clc, close all
 % k, der Redundanzentferner scaled logarithmisch
 
 %einlesen und resampeln
-[y,Fs] = audioread('Bach1.mp3', [10000,600000]);
+[y,Fs] = audioread('Bach1.mp3');
 y=sum(y,2);
-fs=20000;
+fs=3000;
 y=resample(y,fs,Fs);
 %sound(y,fs);
 
 %STFT erzeugen
 frametime=0.1; %zeitliche Aufl?sung in Sekunden
-overlap=0.8; %?berlappung der frames
+overlap=0.6; %?berlappung der frames
 wlen = fs*frametime;
 h = floor(wlen*(1-overlap));
 nfft = wlen;
@@ -23,17 +23,17 @@ nfft = wlen;
 
 
 %Psychoakustische Redundanz entfernen
-S=size(stft);
-k=floor(wlen/20);%die Halbwertssamplel?nge (max. wlen/2)
-rstft=reduce(stft,k);
-Groesse=size(rstft)
-Reduktionsfaktor=length(rstft(:,1))/S(1)
+%S=size(stft);
+%k=floor(wlen/20);%die Halbwertssamplel?nge (max. wlen/2)
+%rstft=reduce(stft,k);
+%Groesse=size(rstft)
+%Reduktionsfaktor=length(rstft(:,1))/S(1)
 
 %Schreibe Feature in csv-file
-csvwrite('features.csv',abs(rstft));
+csvwrite('features.csv',transpose(abs(stft)));
 
 %Rekonstruiere stft
-stft=reproduce(rstft,k,S(1));
+%stft=reproduce(rstft,k,S(1));
 
 %Spektrogramm erzeugen
 imagesc(t, f, abs(stft));
@@ -43,5 +43,5 @@ axis xy
 [x_istft, t_istft] = istft(abs(stft), h, nfft, fs);
 
 %Spiele spektrogramminvertiertes Signal ab
-sound(x_istft,fs);
+%sound(x_istft,fs);
 

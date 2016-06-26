@@ -2,11 +2,19 @@ require 'rnn'
 require 'CSV.lua'
 require 'optim'
 
+<<<<<<< HEAD
 local X = CSV.read('Symbol.csv')     -- training data
 
 -- hyper-parameters 
  batchSize = 1
  rho =50 -- sequence length
+=======
+local X = CSV.read('bach.csv')     -- training data
+
+-- hyper-parameters 
+ batchSize = 1
+ rho = 10 -- sequence length
+>>>>>>> 2fc44a2eb74f9681951fb001502caef26825febe
  hiddenSize = 100
  inputDimension = X:size(2)
  lr = 0.05
@@ -36,6 +44,7 @@ end
 
  local params, grads = rnn:getParameters()
  criterion = nn.MSECriterion()
+<<<<<<< HEAD
  --criterion.sizeAverage = false --throws the normalisation (1/n) away (faster)
 
  local  p = 1 -- data pointer
@@ -53,6 +62,20 @@ local feval = function(x)
   local inputs, targets, outputs = {}, {}, {}
   
   -- forward
+=======
+
+ p = 1 -- data pointer
+ epoch = 1
+-- training
+
+iteration = 1
+while true do
+   if(p+rho > X:size(1)) then
+      p = 1
+      epoch = epoch + 1
+   end
+   local inputs, targets = {}, {} 
+>>>>>>> 2fc44a2eb74f9681951fb001502caef26825febe
    for step=1,rho do
       inputs[step] = X[p+step-1]
       targets[step] = X[p+step]
@@ -87,8 +110,14 @@ for i = 1, maxIt do
         epoch=epoch+1
    end
    
+<<<<<<< HEAD
   local _, loss = optim.adagrad(feval, params, optim_state)
   smothloss=0.95*smothloss+0.05*loss[1]
+=======
+   if iteration%1==0 then
+      print(string.format("Iteration %d ; loss %f ; epoch %d ", iteration, err,epoch))
+   end
+>>>>>>> 2fc44a2eb74f9681951fb001502caef26825febe
 
   if i % 10 == 0 then
       print(string.format("Iteration %d ; Smothloss = %f ; Epoch %d ", i, smothloss,epoch))
@@ -171,8 +200,16 @@ function sample(seed, N)
    return samples
 end
 
+<<<<<<< HEAD
 --local seed = torch.rand(inputDimension) -- X[1]
 local seed = X[p]
 local samples = sample(seed, 400)
 -- print(samples)
 CSV.write(samples,'samples')
+=======
+local seed = torch.rand(inputDimension) -- X[1]
+--local seed = X[1]
+local samples = sample(seed, 200)
+
+CSV.write(samples)
+>>>>>>> 2fc44a2eb74f9681951fb001502caef26825febe
