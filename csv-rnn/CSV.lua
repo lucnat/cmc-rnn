@@ -26,8 +26,8 @@ CSV.read = function (path)
    return X
 end
 
-CSV.write = function (M)
-   local out = assert(io.open("./samples.csv", "w")) -- open a file for serialization
+CSV.write = function (M,name)
+   local out = assert(io.open("./"..name..".csv", "w")) -- open a file for serialization
    splitter = ","
    for i=1,M:size(1) do
        for j=1,M:size(2) do
