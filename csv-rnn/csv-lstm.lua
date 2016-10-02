@@ -2,27 +2,26 @@ require 'rnn'
 require 'CSV.lua'
 require 'optim'
 
+print("Reading Data...")
 local X = CSV.read('Symbol.csv')     -- training data
+print("Done.")
 
 -- hyper-parameters 
- batchSize = 1
- rho =50 -- sequence length
+batchSize       = 1
+rho             = 50 -- sequence length
+hiddenSize      = 1024
+inputDimension  = X:size(2)
+lr              = 0.05
+maxIt           = 500
+loadFile        = 0
 
- hiddenSize = 100
- inputDimension = X:size(2)
- lr = 0.05
- maxIt = 500
- flag=0
+print("InputDimension = "..inputDimension.."; InputSize = ".. X:size(1))
 
-print(string.format("InputDimension %d ; InputSize = %d ", inputDimension, X:size(1)))
-
-if flag==1 then
+if loadFile==1 then
    -- load the model (importand to reinitialise the model or give a different model-name)
-   rnn = torch.load('flag_rnn1.net')
+   rnn = torch.load('CHANGE_MY_NAME.net')
 else
-
    -- build simple recurrent neural network
-
    rnn = nn.Sequential()
       :add(nn.LSTM(inputDimension,hiddenSize,rho))
       :add(nn.LSTM(hiddenSize,hiddenSize,rho))
@@ -91,91 +90,33 @@ for i = 1, maxIt do
   local _, loss = optim.adagrad(feval, params, optim_state)
   smothloss=0.95*smothloss+0.05*loss[1]
 
-  if i % 10 == 0 then
-      print(string.format("Iteration %d ; Smothloss = %f ; Epoch %d ", i, smothloss,epoch))
+  if i % 1 == 0 then
+    print("Iteration = ".. i ..", Smothloss = "..smothloss..", Epoch = "..epoch)
+  end
+  if i % 100 == 0 then
+    print("Saving network state..")
+    torch.save('epoch'..epoch..'loss'..smothloss..'.net', rnn)
+    print('done')
   end
   p = p+rho
 end
 
-
-
---WITHOUT OPTIM
---iteration = 1
---while true do
---   if(p+rho > X:size(1)) then
---      p = 1
---      epoch=epoch+1
---   end
---   local inputs, targets = {}, {} 
---   for step=1,rho do
---      inputs[step] = X[p+step-1]
---      targets[step] = X[p+step]
---   end
---   p = p+rho
---
---   -- 2. forward sequence through rnn
---   
---   rnn:zeroGradParameters() 
---   rnn:forget() -- forget all past time-steps
---   local outputs, err = {}, 0
---   for step=1,rho do
---      --Idee normal:
---      --outputs[step] = rnn:forward(inputs[step])
---
---      --Idee negative Amplitude-->0:
---      out = rnn:forward(inputs[step])
---      idx=torch.lt(out, 0) --überall eins, falls kleiner als null, sonst null
---      out[idx]=0 --überall wo idx==1 wird out zu null, sonst unverändert
---      outputs[step]=out
---
---
---
---      err = err + criterion:forward(outputs[step],targets[step])
---      --err = err + torch.abs(outputs[step]-targets[step])+
---
---   end
---   smothloss=0.95*smothloss+0.05*err
---   if iteration%10==0 then
---      print(string.format("Iteration %d ; Smothloss = %f ; Epoche %d ", iteration, smothloss,epoch))
---   end
---
---   -- 3. backward sequence through rnn (i.e. backprop through time)
---   
---   local gradOutputs, gradInputs = {}, {}
---   for step=rho,1,-1 do -- reverse order of forward calls
---      gradOutputs[step] = criterion:backward(outputs[step], targets[step])
---      gradInputs[step] = rnn:backward(inputs[step], gradOutputs[step])
---   end
---
---   -- 4. update
---   
---   rnn:updateParameters(lr)
---   
---   iteration = iteration + 1
---
---   if( iteration >= maxIt) then
---      break
---   end
---
---end
-
 -- save the model
-torch.save('flag_rnn1.net', rnn)
 
 
-function sample(seed, N)
-   local samples = torch.zeros(N, inputDimension)
-   samples[1] = rnn:forward(seed)
-   for i=2,N do
-      samples[i] = rnn:forward(samples[i-1])
-   end
-   return samples
-end
+-- function sample(seed, N)
+--    local samples = torch.zeros(N, inputDimension)
+--    samples[1] = rnn:forward(seed)
+--    for i=2,N do
+--       samples[i] = rnn:forward(samples[i-1])
+--    end
+--    return samples
+-- end
 
 
---local seed = torch.rand(inputDimension) -- X[1]
-local seed = X[p]
-local samples = sample(seed, 400)
--- print(samples)
-CSV.write(samples,'samples')
+-- --local seed = torch.rand(inputDimension) -- X[1]
+-- local seed = X[p]
+-- local samples = sample(seed, 400)
+-- -- print(samples)
+-- CSV.write(samples,'samples.csv')
 
