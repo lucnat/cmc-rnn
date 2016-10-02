@@ -17,6 +17,9 @@ CSV.read = function (path)
    local X = torch.zeros(amountOfLines,m)
    local i = 0
    for line in csvFile:lines('*l') do
+      if i%400 == 0 then
+        print('read another 400 lines')
+      end
       i = i + 1
       local l = line:split(',')
       for key,val in ipairs(l) do
