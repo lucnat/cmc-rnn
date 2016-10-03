@@ -1,7 +1,6 @@
 ## Classical Music Composition with Recurrent Neural Networks.
 
-
-Using the code in `char-rnn` we trained the network with the Koran and with "The Origin Of Species". `/char-rnn-results` contains sample text of 100'000 characters generated from those networks as well as the corresponding checkpoints that allows you to generate more text. 
+This repo is the code of a project from Luca Naterop and Sandro Giacomuzzi which aims to synthesize Audio with LSTMs. 
 
 ## Run the Code yourself
 
@@ -18,6 +17,10 @@ state files of the network's state every 200 iterations. In order to sample from
 This is going to write a csv file of 1000 generated vectors of size 8 (this has to be the size the 
 network has actually been trained with). 
 Enjoy the ride!
+
+## char-rnn experiments
+
+Using the code in `char-rnn` we trained the network with the Koran and with "The Origin Of Species". `/char-rnn-results` contains sample text of 100'000 characters generated from those networks as well as the corresponding checkpoints that allows you to generate more text. 
 
 ## Links
 
