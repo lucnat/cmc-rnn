@@ -5,7 +5,7 @@ require 'optim'
 cmd = torch.CmdLine()
 cmd:text()
 cmd:text('Options')
-cmd:option('-csv_file','bounce.csv','string option')
+cmd:option('-csv_file','bounce.csv','the csv file that you would like to train')
 cmd:text()
 
 params = cmd:parse(arg)
