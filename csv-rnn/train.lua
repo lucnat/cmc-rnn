@@ -101,7 +101,7 @@ for i = 1, maxIt do
   if i % 1 == 0 then
     print("Iteration = ".. i ..", Smothloss = "..smothloss..", Epoch = "..epoch)
   end
-  if i % 20 == 0 then
+  if i % 200 == 0 then
     print("Saving network state..")
     torch.save('epoch'..epoch..'loss'..smothloss..'.net', rnn)
     print('done')
