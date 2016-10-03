@@ -3,17 +3,9 @@
 
 Using the code in `char-rnn` we trained the network with the Koran and with "The Origin Of Species". `/char-rnn-results` contains sample text of 100'000 characters generated from those networks as well as the corresponding checkpoints that allows you to generate more text. 
 
-## Links:
+## Run the Code yourself
 
-Paper (Work in Progress): https://www.overleaf.com/read/cnkdtvbtfsyd
-
-Research Plan: https://www.overleaf.com/3808219jvshrb
-
-Character language models: https://github.com/karpathy/char-rnn
-
-## Run the Code yourself:
-
-Navigate to `csv-rnn` and there is among others `train.lua` and `sample.lua`. You can now train the 
+Navigate to `csv-rnn` and you will find there among others the files `train.lua` and `sample.lua`. You can now train the 
 net by running
 
 `th train.lua -csv_file bounce.csv`
@@ -27,3 +19,10 @@ This is going to write a csv file of 1000 generated vectors of size 8 (this has 
 network has actually been trained with). 
 Enjoy the ride!
 
+## Links
+
+Paper (Work in Progress): https://www.overleaf.com/read/cnkdtvbtfsyd
+
+Research Plan: https://www.overleaf.com/3808219jvshrb
+
+Character language models: https://github.com/karpathy/char-rnn
