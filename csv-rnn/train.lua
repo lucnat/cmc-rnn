@@ -2,8 +2,16 @@ require 'rnn'
 require 'CSV.lua'
 require 'optim'
 
+cmd = torch.CmdLine()
+cmd:text()
+cmd:text('Options')
+cmd:option('-file','bounce.csv','string option')
+cmd:text()
+
+params = cmd:parse(arg)
+
 print("Reading Data...")
-local X = CSV.read('bounce.csv')     -- training data
+local X = CSV.read(params.file)     -- training data
 print("Done.")
 
 -- hyper-parameters 
