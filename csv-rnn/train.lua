@@ -20,7 +20,7 @@ rho             = 50 -- sequence length
 hiddenSize      = 1024
 inputDimension  = X:size(2)
 lr              = 0.05
-maxIt           = 500
+maxIt           = 100000
 loadFile        = 0
 
 print("InputDimension = "..inputDimension.."; InputSize = ".. X:size(1))
