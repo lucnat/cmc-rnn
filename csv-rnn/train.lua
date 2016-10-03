@@ -20,7 +20,7 @@ rho             = 50 -- sequence length
 hiddenSize      = 1024
 inputDimension  = X:size(2)
 lr              = 0.05
-maxIt           = 100000
+maxIt           = 10000000
 loadFile        = 0
 
 print("InputDimension = "..inputDimension.."; InputSize = ".. X:size(1))
@@ -32,6 +32,7 @@ else
    -- build simple recurrent neural network
    rnn = nn.Sequential()
       :add(nn.LSTM(inputDimension,hiddenSize,rho))
+      :add(nn.LSTM(hiddenSize,hiddenSize,rho))
       :add(nn.LSTM(hiddenSize,hiddenSize,rho))
       :add(nn.Linear(hiddenSize, inputDimension))
 
@@ -98,8 +99,8 @@ for i = 1, maxIt do
   local _, loss = optim.adagrad(feval, params, optim_state)
   smothloss=0.95*smothloss+0.05*loss[1]
 
-  if i % 1 == 0 then
-    print("Iteration = ".. i ..", Smothloss = "..smothloss..", Epoch = "..epoch)
+  if i % 10 == 0 then
+    print("i = ".. i ..", loss = "..smothloss..", epoch = "..epoch)
   end
   if i % 200 == 0 then
     print("Saving network state..")
