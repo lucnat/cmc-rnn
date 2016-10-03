@@ -5,7 +5,7 @@ Using the code in `char-rnn` we trained the network with the Koran and with "The
 
 ## Run the Code yourself
 
-Navigate to `csv-rnn` and you will find there among others the files `train.lua` and `sample.lua`. You can now train the 
+Navigate to the folder `/csv-rnn` and you will find there among others the files `train.lua` and `sample.lua`. You can now train the 
 net by running
 
 `th train.lua -csv_file bounce.csv`
