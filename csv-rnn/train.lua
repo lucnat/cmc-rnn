@@ -5,13 +5,13 @@ require 'optim'
 cmd = torch.CmdLine()
 cmd:text()
 cmd:text('Options')
-cmd:option('-file','bounce.csv','string option')
+cmd:option('-csv_file','bounce.csv','string option')
 cmd:text()
 
 params = cmd:parse(arg)
 
 print("Reading Data...")
-local X = CSV.read(params.file)     -- training data
+local X = CSV.read(params.csv_file)     -- training data
 print("Done.")
 
 -- hyper-parameters 
@@ -101,7 +101,7 @@ for i = 1, maxIt do
   if i % 1 == 0 then
     print("Iteration = ".. i ..", Smothloss = "..smothloss..", Epoch = "..epoch)
   end
-  if i % 100 == 0 then
+  if i % 20 == 0 then
     print("Saving network state..")
     torch.save('epoch'..epoch..'loss'..smothloss..'.net', rnn)
     print('done')
