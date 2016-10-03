@@ -1,6 +1,6 @@
 ## Classical Music Composition with Recurrent Neural Networks.
 
-This repo is the code of a project from Luca Naterop and Sandro Giacomuzzi which aims to synthesize Audio with LSTMs. 
+This repo is the code of an ETH project from Luca Naterop and Sandro Giacomuzzi which aims to synthesize Audio with LSTMs. 
 
 ## Run the Code yourself
 
