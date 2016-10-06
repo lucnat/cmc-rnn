@@ -47,4 +47,4 @@ nfft = wlen;
 [x_istft, t_istft] = istft(X, h, nfft, fs);
 
 % Spiele spektrogramminvertiertes Signal ab
-sound(x_istft(1:100000),fs);
+sound(x_istft,fs);
