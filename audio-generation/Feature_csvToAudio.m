@@ -13,9 +13,9 @@ SVD=0;
 
 
 %Lese csv-files
-X=csvread('features.csv');
+X=csvread('features.csv')';
 S=size(X)
-SIZE=csvread('size.csv');
+SIZE=csvread('sizeFaturesAmplitude_Bach.csv');
 if S(2)==1
     X=reshape(X,S(1)/SIZE(2),SIZE(2))';
     size(X)
