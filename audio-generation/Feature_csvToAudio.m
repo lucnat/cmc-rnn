@@ -13,10 +13,9 @@ SVD=0;
 
 
 %Lese csv-files
-X=csvread('FeaturesAmplitude_Bach.csv');
-X=X';
+X=csvread('features.csv');
 S=size(X)
-SIZE=csvread('sizeFaturesAmplitude_Bach.csv');
+SIZE=csvread('size.csv');
 if S(2)==1
     X=reshape(X,S(1)/SIZE(2),SIZE(2))';
     size(X)
@@ -47,4 +46,4 @@ nfft = wlen;
 [x_istft, t_istft] = istft(X, h, nfft, fs);
 
 % Spiele spektrogramminvertiertes Signal ab
-sound(x_istft,fs);
+sound(x_istft(1:100000),fs);
