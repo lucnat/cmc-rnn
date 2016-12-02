@@ -1,10 +1,13 @@
 ## Dependencies
 
-Before you get started, you will need to install the following dependencies
+Before you get started, you will need to install tensorflow. Check the official website for how to install it. 
 
-`tensorflow`
-
-check the official website for how to install it. We also need tabulate: 
+Also, we need tabulate for nice printing
 
 `pip install tabulate`
 
+## Train the network
+
+You can train the network by running 
+
+`python train.py file.csv`
