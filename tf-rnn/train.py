@@ -11,19 +11,21 @@ import sys
 csvfile = sys.argv[1]
 
 # Reading data
+print('reading data..')
 x = genfromtxt(csvfile, delimiter=',')
 
 # Hyper Parameters
 N = x.shape[1] 		# input dimension
-num_hidden = 32	# amount of hidden units
+num_hidden = 128	# amount of hidden units
 num_layers = 2		# amount of hidden layers
 lr = 0.001 			# learning reate
-train_size = 300	# size of training set
+train_size = 400	# size of training set
 
 print('------------- PARAMETERS --------------')
 print('N = ' + str(N) + ', num_hidden = ' + str(num_hidden) + ', num_layers = ' + str(num_layers) + ', lr = ' + str(lr) + ', train_size = ' + str(train_size) + ', m = ' + str(x.shape[0]))
 print('--------------------------------------')
 
+print('creating model..')
 # split in training and test set
 x_train = x[:train_size]
 x_test = x[train_size:]
@@ -51,17 +53,17 @@ init_op = tf.initialize_all_variables()
 sess = tf.Session()
 sess.run(init_op)
 
-def sample():
+def sample(amount):
 	"synthesizes from the model"
 	# let's sample a bit here to see whats going on
 	print('sampling...')
-	amount_samples = 20
-	samples = np.zeros([amount_samples,N])
+	samples = np.zeros([amount,N])
 	inp = x_train[0:1]
-	for k in range(amount_samples):
+	for k in range(amount):
 		samples[k] = inp.reshape([N])
 		inp = sess.run(prediction,{data: inp.reshape([1,N,1])})
-	print(tabulate(samples))
+	return samples
+
 
 
 def test():
@@ -75,29 +77,40 @@ def test():
 
 def train():
 	"trains the model"
-	batch_size = 10
+	print('start training...')
+	batch_size = 20
 	batchLoader = BatchLoader(x_train,batch_size)
 
 	no_of_batches = int(len(x_train)/batch_size)
 	epochs = 1000
-	cost = 1.0
+	cost = 100
 
-	for i in range(epochs):
+	for epoch in range(epochs):
 		isLastBatch = False
-		batch_index = 0
+		i = 0
 		while not isLastBatch:
-			batch_index += 1
+			i += 1
 			inputs, targets, isLastBatch = batchLoader.nextRNNBatch()
 			inputs = inputs.reshape([inputs.shape[0],N,1])
 			_, cost = sess.run([minimize, loss],{data: inputs, target: targets})
-			if batch_index == 1:
-				print('epoch = ' + str(i) + ', cost = ' + str(cost))
+			if i %1 == 0:
+				print('epoch = ' + str(epoch) + ', i = ' + str(i) + ', cost = ' + str(cost))
 
-		if i%10 == 0:
+			# if i%10 == 0:
+				# samples = sample(50)
+				# filename = 'e'+str(epoch)+'loss'+str(cost)+'.csv'
+				# print('writing ' + filename + '...')
+				# np.savetxt(filename,samples,delimiter=",")
+				# print('done')
+
+		if epoch%1 == 0:
 			test()
-			sample()
+			samples = sample(1000)
+			filename = 'e'+str(epoch)+'loss'+str(cost)+'.csv'
+			print('writing ' + filename + '...')
+			np.savetxt(filename,samples,delimiter=",")
+			print('done')
 train()
-
 sess.close()
 
 
