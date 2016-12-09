@@ -5,7 +5,6 @@
 
 import math
 import numpy as np
-from tabulate import tabulate
 
 class BatchLoader:
 	'Creates batches from data and returns them. Can also create batches with corresponding targets for RNNs'
