@@ -33,10 +33,10 @@ train_op = tf.train.AdamOptimizer(0.1).minimize(lossfunc)
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 
-epochs = 10000
+epochs = 2000
 for i in range(epochs):
   _, loss = sess.run([train_op, lossfunc] ,feed_dict={x: inputs.reshape(N,1), y: targets.reshape(N,1)})
-  print(' epoch = ' + str(i) + ', loss = ' + str(loss))
+  print('epoch = ' + str(i) + ', loss = ' + str(loss))
 
 # sample
 y_generated = sess.run([y_out], {x: inputs.reshape(N,1)})
