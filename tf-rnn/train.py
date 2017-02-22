@@ -1,9 +1,7 @@
 import numpy as np
-from numpy import genfromtxt
 from random import shuffle
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from tabulate import tabulate
 from batchloader import BatchLoader
 import sys
 
@@ -12,7 +10,7 @@ csvfile = sys.argv[1]
 
 # Reading data
 print('reading data..')
-x = genfromtxt(csvfile, delimiter=',')
+x = np.genfromtxt(csvfile, delimiter=',')
 
 # Hyper Parameters
 N = x.shape[1] 		# input dimension
