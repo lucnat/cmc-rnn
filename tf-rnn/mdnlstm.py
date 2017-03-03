@@ -21,10 +21,11 @@ data = data + noise
 N = data.shape[0]	# data set size
 L = data.shape[1]	# amount of standard outputs if there was no mdn
 hidden_units = 10	# amount of hidden units
-hidden_layers = 2	# amount of hidden layers
-K = 2 				# amount of mixtures
+hidden_layers = 1	# amount of hidden layers
+K = 1 				# amount of mixtures
 batch_size = N 		# equates to max time, is this actually true?	
-epochs = 300		
+max_time = 10		# max time
+epochs = 1000		
 learning_rate = 0.01
 
 print('--------------------------------- PARAMETERS ---------------------------------')
@@ -37,33 +38,37 @@ print('-------------------------------------------------------------------------
 print('creating the model...')
 outputs = (L+2)*K
 
-x = tf.placeholder(dtype=tf.float32, shape=[None,L])					# (N,L)
-X = tf.expand_dims(x, 2)
-y = tf.placeholder(dtype=tf.float32, shape=[None,L])					# (N,1)
+x = tf.placeholder(dtype=tf.float32, shape=[None,None,L])				# (B,T,L)
+y = tf.placeholder(dtype=tf.float32, shape=[None,L])					# (B,L)
 
-batchDim = tf.shape(X)[0]
+B = tf.shape(x)[0]
+T = tf.shape(x)[1]
 
-cell = tf.contrib.rnn.BasicLSTMCell(hidden_units,state_is_tuple=True)
-cell = tf.contrib.rnn.MultiRNNCell([cell] * hidden_layers,state_is_tuple=True)
-output, state = tf.nn.dynamic_rnn(cell,X, dtype=tf.float32)
-output = tf.transpose(output, [1, 0, 2])
-last = tf.gather(output, int(output.get_shape()[0]) - 1)
+init_state = tf.placeholder(tf.float32, [hidden_layers, 2, None, hidden_units])
+l = tf.unstack(init_state, axis=0)
+rnn_tuple_state = tuple( [tf.contrib.rnn.LSTMStateTuple(l[idx][0], l[idx][1]) for idx in range(hidden_layers)])
+
+cell = tf.contrib.rnn.LSTMCell(hidden_units)
+cell = tf.contrib.rnn.MultiRNNCell([cell] * hidden_layers)
+output, state = tf.nn.dynamic_rnn(cell,x, dtype=tf.float32, initial_state=rnn_tuple_state)	# output: (B,T,H), state: ([B,H],[B,H])
+output = tf.transpose(output, [1,0,2])									# (T,B,H)
+last = tf.gather(output, T-1)											# (B,H)
 
 W_out = tf.Variable(tf.random_normal([hidden_units,outputs], stddev=0.1, dtype=tf.float32))
 b_out = tf.Variable(tf.random_normal([outputs], stddev=0.1, dtype=tf.float32))
-y_out = tf.matmul(last,W_out) + b_out												# (N,(L+2)K)
+y_out = tf.matmul(last,W_out) + b_out									# (B,(L+2)K)
 
 def getMixtureCoefficients(output):
 	pi_k, sigma_k, mu_k = tf.split(output, [K,K,L*K], 1)									# 
-	mu_k = tf.reshape(mu_k, [batchDim,K,L])														# (N,K,L)
-	pi_k = tf.nn.softmax(pi_k)																# (N,K)
-	sigma_k = tf.exp(sigma_k) 																# (N,K)
+	mu_k = tf.reshape(mu_k, [B,K,L])														# (B,K,L)
+	pi_k = tf.nn.softmax(pi_k)																# (B,K)
+	sigma_k = tf.exp(sigma_k) 																# (B,K)
 	return pi_k, sigma_k, mu_k
-pi_k, sigma_k, mu_k = getMixtureCoefficients(y_out)											# (N,K)
+pi_k, sigma_k, mu_k = getMixtureCoefficients(y_out)											# (B,K)
 
 def gaussian(y, mu_k, sigma_k):
-	y = tf.reshape(y, [batchDim,1,L])
-	norm = tf.reduce_sum(tf.square(y-mu_k),axis=2)	# sums over the L dimensions -> we get shape (N,K) again
+	y = tf.reshape(y, [B,1,L])
+	norm = tf.reduce_sum(tf.square(y-mu_k),axis=2)	# sums over the L dimensions -> we get shape (B,K) again
 	phi_k = -tf.div(norm, 2*tf.square(sigma_k))		
 	phi_k = tf.exp(phi_k)
 	phi_k = tf.divide(phi_k, sigma_k)
@@ -77,7 +82,18 @@ loss = tf.reduce_sum(-tf.log(loss))
 # other branch of graph for predictions
 max_indices = tf.argmax(pi_k, 1)
 
-train_op = tf.train.RMSPropOptimizer(learning_rate).minimize(loss)
+train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
+
+def create_batches(data, T):
+	N = data.shape[0]
+	B = N-1-T
+	L = data.shape[1]
+	inputs = np.zeros([B,T,L])
+	targets = np.zeros([B,L])
+	for i in range(0,B):
+		inputs[i,:,:] = data[i:i+T,:]
+		targets[i] = data[i+T,:]
+	return inputs, targets
 
 # launch session
 sess = tf.Session()
@@ -85,28 +101,18 @@ sess.run(tf.global_variables_initializer())
 
 # training
 print('starting training...')
-
-batchLoader = BatchLoader(data,batch_size)
-
+inputs, targets = create_batches(data, max_time)
+B_ = inputs.shape[0]
+State = np.zeros([hidden_layers,2,B_,hidden_units])
 for epoch in range(epochs):
-	isLastBatch = False
-	i = 0
-	while not isLastBatch:
-		i += 1
-		inputs, targets, isLastBatch = batchLoader.nextRNNBatch()
-		_, cost = sess.run([train_op, loss],{x: inputs, y: targets})
-		print(' epoch = ' + str(epoch) + ', i = ' + str(i) + ' , loss = ' + str(cost*N/batch_size))
-
-print('sampling from the model....')
-mu_i, maxima, pi_i, sigma_i = sess.run([mu_k, max_indices, pi_k, sigma_k], {x: data})
-maxima 	= np.array(maxima)
-mu_i 	= np.array(mu_i)
-pi_i 	= np.array(pi_i)
-sigma_i = np.array(sigma_i)
-
+	_, cost,State = sess.run([train_op, loss, state],{x: inputs, y: np.round(targets), init_state: State})
+	print('epoch = ' + str(epoch) + ' , loss = ' + str(cost))
+	State = np.zeros([hidden_layers,2,B_,hidden_units])
 def meanOfMaxProb(all_mu, max_indices):
-	result = np.zeros([N,L])
-	for i in range(N):
+	B = all_mu.shape[0]
+	L = all_mu.shape[2]
+	result = np.zeros([B,L])
+	for i in range(B):
 		result[i, :] = all_mu[i, max_indices[i], :]
 	return result
 
@@ -127,25 +133,33 @@ def distByProb(all_mu, pi_i, sgima_i):
 	return result
 
 # sample
-def sample(amount):
+def sample(seed, amount):
+	B = 1
 	"synthesizes from the model"
-	# let's sample a bit here to see whats going on
-	print('sampling...')
-	samples = np.zeros([amount,N])
-	inp = data[0:1]
-	for k in range(amount):
-		samples[k] = inp.reshape([N])
-		inp = sess.run(prediction,{x: inp})
+	print('sampling from the model....')
+	S = seed.shape[0]
+	L = seed.shape[1]
+	samples = np.zeros([S+amount, L])
+	samples[0:S,:] = np.round(seed)
+	seq_length = S+amount+100
+	State = np.zeros([hidden_layers,2,1,hidden_units])
+
+	for i in range(0,amount):
+		mu_i, maxima, pi_i, sigma_i, State = sess.run([mu_k, max_indices, pi_k, sigma_k, state], {x: np.expand_dims(seed, axis=0), init_state: State})
+		maxima 	= np.array(maxima)
+		mu_i 	= np.array(mu_i)
+		pi_i 	= np.array(pi_i)
+		sigma_i = np.array(sigma_i)
+		predictions = meanOfMaxProb(mu_i,maxima)
+		# seed = predictions
+		seed[0:-1,:] = seed[1:,:]
+		seed[-1,:] = predictions
+		samples[S+i,:] = predictions
+		State = np.zeros([hidden_layers,2,1,hidden_units])
 	return samples
 
-predictions = meanOfMaxProb(mu_i, maxima)
-print(tabulate(predictions[:100]))
-
-# plot
-# fig = plt.figure()
-# ax = plt.axes(projection='3d')
-# ax.plot(inputs, targets1, targets2, '.')
-# ax.plot(inputs, np.transpose(predictions)[0], np.transpose(predictions)[1], '.')
-# plt.show()
+seed = data[0:max_time,:]
+samples = sample(seed, 200)
+print(tabulate(samples))
 
 sess.close()
