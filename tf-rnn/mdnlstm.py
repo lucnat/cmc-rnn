@@ -13,18 +13,24 @@ csvfile = sys.argv[1]
 print('reading data..')
 data = np.genfromtxt(csvfile, delimiter=',')
 
+# add noise to data
+noise = np.random.rand(data.shape[0], data.shape[1])*0.1
+data = data + noise
+
 # Parameters
 N = data.shape[0]	# data set size
 L = data.shape[1]	# amount of standard outputs if there was no mdn
 hidden_units = 10	# amount of hidden units
-hidden_layers = 2		# amount of hidden layers
-K = 1 				# amount of mixtures
-batch_size = N
-epochs = 1000
+hidden_layers = 2	# amount of hidden layers
+K = 2 				# amount of mixtures
+batch_size = N 		# equates to max time, is this actually true?	
+epochs = 300		
 learning_rate = 0.01
 
 print('--------------------------------- PARAMETERS ---------------------------------')
-print('N = ' + str(N) + ', L = ' + str(L) + ', K = ' + str(K) + ', hidden_units = ' + str(hidden_units) + ', hidden_layers = ' + str(hidden_layers) + ', lr = ' + str(learning_rate) )
+print('N = ' + str(N) + ', L = ' + str(L) + ', K = ' + 
+	str(K) + ', hidden_units = ' + str(hidden_units) + 
+	', hidden_layers = ' + str(hidden_layers) + ', lr = ' + str(learning_rate))
 print('------------------------------------------------------------------------------')
 
 # model
