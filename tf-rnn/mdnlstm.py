@@ -12,30 +12,31 @@ csvfile = sys.argv[1]
 # Reading data
 print('reading data..')
 data = np.genfromtxt(csvfile, delimiter=',')
-datascaling = 1
-data = data/datascaling
-
-# add noise to data
-# noise = np.random.rand(data.shape[0], data.shape[1])*0.1
-# data = data + noise
+data_max = np.max(data)
+data = data/data_max
 
 # Parameters
 N = data.shape[0]		# data set size
 L = data.shape[1]		# amount of standard outputs if there was no mdn
-hidden_units = 32		# amount of hidden units
+hidden_units = 124		# amount of hidden units
 hidden_layers = 1		# amount of hidden layers
-K = 2 					# amount of mixtures
-max_time = 10			# max time
+K = 5 					# amount of mixtures
+max_time = 20			# max time
 B_hat = N-max_time-1 	# total amount of batches
-B = 10  				# amount of batches to pass in one
-epochs = 2		
+B = 300  				# amount of batches to pass in one
+epochs = 100		
+noise = 0.001
 learning_rate = 0.001
+
 
 print('--------------------------------- PARAMETERS ---------------------------------')
 print('N = ' + str(N) + ', L = ' + str(L) + ', K = ' + str(K) + 
 	', B = ' + str(B) + ', hidden_units = ' + str(hidden_units) + 
 	', hidden_layers = ' + str(hidden_layers) + ', lr = ' + str(learning_rate))
 print('------------------------------------------------------------------------------')
+
+plt.imshow(np.transpose(data), cmap='hot', interpolation='nearest')
+plt.show()
 
 # model
 print('creating the model...')
@@ -51,7 +52,7 @@ T = tf.shape(x)[1]
 # l = tf.unstack(init_state, axis=0)
 # rnn_tuple_state = tuple( [tf.contrib.rnn.LSTMStateTuple(l[idx][0], l[idx][1]) for idx in range(hidden_layers)])
 
-cell = tf.contrib.rnn.LSTMCell(hidden_units, use_peepholes=True, cell_clip=5)
+cell = tf.contrib.rnn.LSTMCell(hidden_units, use_peepholes=False)
 cell = tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=0.7)
 cell = tf.contrib.rnn.MultiRNNCell([cell] * hidden_layers)
 output, state = tf.nn.dynamic_rnn(cell,x, dtype=tf.float64)				# output: (B,T,H), state: ([B,H],[B,H])
@@ -112,6 +113,7 @@ for epoch in range(epochs):
 
 	for i in range(0,int(B_hat/B)):
 		inputs = all_inputs[i:i+B,:,:]
+		inputs = inputs + np.random.rand(inputs.shape[0], inputs.shape[1],inputs.shape[2])*noise
 		targets = all_targets[i:i+B,:]
 		_, cost,State = sess.run([train_op, loss, state],{x: inputs, y: targets})
 		cost = cost/B
@@ -126,11 +128,13 @@ def meanOfMaxProb(all_mu, max_indices):
 	return result
 
 def meanByProb(all_mu, pi_i):
-	result = np.zeros([N,L])
+	B = all_mu.shape[0]
+	L = all_mu.shape[2]
+	result = np.zeros([B,L])
 	elements = np.linspace(0,K-1,K)
-	for i in range(all_mu.shape[0]):
-		index = np.random.choice(elements, 1, p=pi_i[i])[0]
-		result[i] = all_mu[i,index]
+	for i in range(B):
+		index = np.int8(np.random.choice(elements, 1, p=pi_i[i])[0])
+		result[i,:] = all_mu[i,index,:]
 	return result
 
 def distByProb(all_mu, pi_i, sgima_i):
@@ -149,7 +153,7 @@ def sample(seed, amount):
 	S = seed.shape[0]
 	L = seed.shape[1]
 	samples = np.zeros([S+amount, L])
-	samples[0:S,:] = np.round(seed)
+	samples[0:S,:] = seed
 	# State = np.zeros([hidden_layers,2,1,hidden_units])
 
 	for i in range(0,amount):
@@ -158,17 +162,18 @@ def sample(seed, amount):
 		mu_i 	= np.array(mu_i)
 		pi_i 	= np.array(pi_i)
 		sigma_i = np.array(sigma_i)
-		predictions = meanOfMaxProb(mu_i,maxima)
+		predictions = meanByProb(mu_i,pi_i)
 		# seed = predictions
 		seed[0:-1,:] = seed[1:,:]
 		seed[-1,:] = predictions
 		samples[S+i,:] = predictions
-	samples = samples*datascaling
-	plt.imshow(np.transpose(samples), cmap='hot', interpolation='nearest')
-	plt.show()
+	samples = samples
 	return samples
 
 seed = data[0:max_time,:]
-samples = sample(seed, 100)
+samples = sample(seed, 200)
+samples = samples*data_max
+plt.imshow(np.transpose(samples), cmap='hot', interpolation='nearest')
+plt.show()
 np.savetxt('sampled.csv', samples, delimiter=',')
 sess.close()

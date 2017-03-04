@@ -13,7 +13,7 @@ SVD=0;
 
 
 %Lese csv-files
-X=csvread('features.csv')';
+X=csvread('sound.csv')';
 S=size(X)
 SIZE=csvread('sizeFaturesAmplitude_Bach.csv');
 if S(2)==1
