@@ -12,7 +12,7 @@ csvfile = sys.argv[1]
 # Reading data
 print('reading data..')
 data = np.genfromtxt(csvfile, delimiter=',')
-datascaling = 100
+datascaling = 1
 data = data/datascaling
 
 # add noise to data
@@ -22,18 +22,18 @@ data = data/datascaling
 # Parameters
 N = data.shape[0]		# data set size
 L = data.shape[1]		# amount of standard outputs if there was no mdn
-hidden_units = 256		# amount of hidden units
-hidden_layers = 2		# amount of hidden layers
+hidden_units = 32		# amount of hidden units
+hidden_layers = 1		# amount of hidden layers
 K = 2 					# amount of mixtures
-max_time = 50			# max time
+max_time = 10			# max time
 B_hat = N-max_time-1 	# total amount of batches
-B = 10					# amount of batches to pass in one
+B = 10  				# amount of batches to pass in one
 epochs = 2		
 learning_rate = 0.001
 
 print('--------------------------------- PARAMETERS ---------------------------------')
-print('N = ' + str(N) + ', L = ' + str(L) + ', K = ' + 
-	str(K) + ', hidden_units = ' + str(hidden_units) + 
+print('N = ' + str(N) + ', L = ' + str(L) + ', K = ' + str(K) + 
+	', B = ' + str(B) + ', hidden_units = ' + str(hidden_units) + 
 	', hidden_layers = ' + str(hidden_layers) + ', lr = ' + str(learning_rate))
 print('------------------------------------------------------------------------------')
 
@@ -52,6 +52,7 @@ T = tf.shape(x)[1]
 # rnn_tuple_state = tuple( [tf.contrib.rnn.LSTMStateTuple(l[idx][0], l[idx][1]) for idx in range(hidden_layers)])
 
 cell = tf.contrib.rnn.LSTMCell(hidden_units, use_peepholes=True, cell_clip=5)
+cell = tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=0.7)
 cell = tf.contrib.rnn.MultiRNNCell([cell] * hidden_layers)
 output, state = tf.nn.dynamic_rnn(cell,x, dtype=tf.float64)				# output: (B,T,H), state: ([B,H],[B,H])
 output = tf.transpose(output, [1,0,2])									# (T,B,H)
@@ -113,6 +114,7 @@ for epoch in range(epochs):
 		inputs = all_inputs[i:i+B,:,:]
 		targets = all_targets[i:i+B,:]
 		_, cost,State = sess.run([train_op, loss, state],{x: inputs, y: targets})
+		cost = cost/B
 		print('epoch = ' + str(epoch) + ', i = ' + str(i) + ' , loss = ' + str(cost))
 
 def meanOfMaxProb(all_mu, max_indices):
@@ -167,6 +169,6 @@ def sample(seed, amount):
 	return samples
 
 seed = data[0:max_time,:]
-samples = sample(seed, 200)
+samples = sample(seed, 100)
 np.savetxt('sampled.csv', samples, delimiter=',')
 sess.close()
