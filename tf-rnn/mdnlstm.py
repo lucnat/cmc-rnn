@@ -24,7 +24,7 @@ K = 3 					# amount of mixtures
 max_time = 7			# max time
 B_hat = N-max_time-1 	# total amount of batches
 B = 20  				# amount of batches to pass in one
-epochs = 30		
+epochs = 500		
 noise = 0.001
 learning_rate = 0.001
 
@@ -127,7 +127,8 @@ def distByProb(all_mu, pi_i, sgima_i):
 	return result
 
 # sample
-def sample(seed, amount):
+def sample(Seed, amount):
+	seed = np.copy(Seed)
 	B = 1
 	"synthesizes from the model"
 	print('sampling from the model....')
@@ -167,15 +168,16 @@ for epoch in range(epochs):
 		inputs = inputs + np.random.rand(inputs.shape[0], inputs.shape[1],inputs.shape[2])*noise
 		targets = all_targets[i:i+B,:]
 		_, cost,State = sess.run([train_op, loss, state],{x: inputs, y: targets})
-		smoothloss = 0.99*smoothloss + 0.01*cost
 		cost = cost/B
+		smoothloss = 0.99*smoothloss + 0.01*cost
 		print('epoch = ' + str(epoch) + ', i = ' + str(i) + ' , smoothloss = ' + str(smoothloss))
 
 	seedstart = int(N/10)
 	seed = data[seedstart:seedstart+max_time,:]
+	print(tabulate(seed))
 	samples = sample(seed, 1000)
 	samples = samples*data_max
-	print(tabulate(samples))
+	# print(tabulate(samples))
 	np.savetxt('generated/l=' + str(cost) + '.csv', samples, delimiter=',')
 
 
