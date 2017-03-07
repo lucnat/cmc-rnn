@@ -100,25 +100,6 @@ def create_batches(data, T):
 		targets[i] = data[i+T,:]
 	return inputs, targets
 
-# launch session
-sess = tf.Session()
-sess.run(tf.global_variables_initializer())
-
-# training
-print('starting training...')
-all_inputs, all_targets = create_batches(data, max_time)
-B_hat = all_inputs.shape[0]
-# State = np.zeros([hidden_layers,2,B_,hidden_units])
-for epoch in range(epochs):
-
-	for i in range(0,int(B_hat/B)):
-		inputs = all_inputs[i:i+B,:,:]
-		inputs = inputs + np.random.rand(inputs.shape[0], inputs.shape[1],inputs.shape[2])*noise
-		targets = all_targets[i:i+B,:]
-		_, cost,State = sess.run([train_op, loss, state],{x: inputs, y: targets})
-		cost = cost/B
-		print('epoch = ' + str(epoch) + ', i = ' + str(i) + ' , loss = ' + str(cost))
-
 def meanOfMaxProb(all_mu, max_indices):
 	B = all_mu.shape[0]
 	L = all_mu.shape[2]
@@ -170,10 +151,34 @@ def sample(seed, amount):
 	samples = samples
 	return samples
 
-seed = data[0:max_time,:]
-samples = sample(seed, 200)
-samples = samples*data_max
+# launch session
+sess = tf.Session()
+sess.run(tf.global_variables_initializer())
+
+# training
+print('starting training...')
+all_inputs, all_targets = create_batches(data, max_time)
+B_hat = all_inputs.shape[0]
+# State = np.zeros([hidden_layers,2,B_,hidden_units])
+smoothloss = 100
+for epoch in range(epochs):
+	for i in range(0,int(B_hat/B)):
+		inputs = all_inputs[i:i+B,:,:]
+		inputs = inputs + np.random.rand(inputs.shape[0], inputs.shape[1],inputs.shape[2])*noise
+		targets = all_targets[i:i+B,:]
+		_, cost,State = sess.run([train_op, loss, state],{x: inputs, y: targets})
+		smoothloss = 0.99*smoothloss + 0.01*cost
+		cost = cost/B
+		print('epoch = ' + str(epoch) + ', i = ' + str(i) + ' , smoothloss = ' + str(smoothloss))
+
+	seedstart = int(N/10)
+	seed = data[seedstart:seedstart+max_time,:]
+	samples = sample(seed, 1000)
+	samples = samples*data_max
+	print(tabulate(samples))
+	np.savetxt('generated/l=' + str(cost) + '.csv', samples, delimiter=',')
+
+
 # plt.imshow(np.transpose(samples), cmap='hot', interpolation='nearest')
 # plt.show()
-np.savetxt('sampled.csv', samples, delimiter=',')
 sess.close()
