@@ -18,13 +18,13 @@ data = data/data_max
 # Parameters
 N = data.shape[0]		# data set size
 L = data.shape[1]		# amount of standard outputs if there was no mdn
-hidden_units = 124		# amount of hidden units
+hidden_units = 30		# amount of hidden units
 hidden_layers = 1		# amount of hidden layers
-K = 5 					# amount of mixtures
-max_time = 20			# max time
+K = 3 					# amount of mixtures
+max_time = 7			# max time
 B_hat = N-max_time-1 	# total amount of batches
-B = 300  				# amount of batches to pass in one
-epochs = 100		
+B = 20  				# amount of batches to pass in one
+epochs = 30		
 noise = 0.001
 learning_rate = 0.001
 
@@ -35,8 +35,8 @@ print('N = ' + str(N) + ', L = ' + str(L) + ', K = ' + str(K) +
 	', hidden_layers = ' + str(hidden_layers) + ', lr = ' + str(learning_rate))
 print('------------------------------------------------------------------------------')
 
-plt.imshow(np.transpose(data), cmap='hot', interpolation='nearest')
-plt.show()
+# plt.imshow(np.transpose(data), cmap='hot', interpolation='nearest')
+# plt.show()
 
 # model
 print('creating the model...')
@@ -173,7 +173,7 @@ def sample(seed, amount):
 seed = data[0:max_time,:]
 samples = sample(seed, 200)
 samples = samples*data_max
-plt.imshow(np.transpose(samples), cmap='hot', interpolation='nearest')
-plt.show()
+# plt.imshow(np.transpose(samples), cmap='hot', interpolation='nearest')
+# plt.show()
 np.savetxt('sampled.csv', samples, delimiter=',')
 sess.close()
