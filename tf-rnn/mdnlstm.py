@@ -15,20 +15,24 @@ data = np.genfromtxt(csvfile, delimiter=',')
 data_max = np.max(data)
 data = data/data_max
 
+
 # Parameters
+folder_name = 'fancynet'
 N = data.shape[0]		# data set size
 L = data.shape[1]		# amount of standard outputs if there was no mdn
-hidden_units = 30		# amount of hidden units
-hidden_layers = 1		# amount of hidden layers
-K = 3 					# amount of mixtures
-max_time = 7			# max time
-B_hat = N-max_time-1 	# total amount of batches
-B = 20  				# amount of batches to pass in one
-epochs = 500		
+hidden_units = 256		# amount of hidden units
+hidden_layers = 6		# amount of hidden layers
+K = 20 				# amount of mixtures
+max_time = 60			# max time
+B_hat = N-max_time-1 		# total amount of batches
+B = 100  			# amount of batches to pass in one
+epochs = 1000		
 noise = 0.001
-learning_rate = 0.001
+learning_rate = 0.00004
+sample_size = 600
+write_every = 3
 
-
+print('folder name: ' + folder_name)
 print('--------------------------------- PARAMETERS ---------------------------------')
 print('N = ' + str(N) + ', L = ' + str(L) + ', K = ' + str(K) + 
 	', B = ' + str(B) + ', hidden_units = ' + str(hidden_units) + 
@@ -171,14 +175,14 @@ for epoch in range(epochs):
 		cost = cost/B
 		smoothloss = 0.99*smoothloss + 0.01*cost
 		print('epoch = ' + str(epoch) + ', i = ' + str(i) + ' , smoothloss = ' + str(smoothloss))
-
-	seedstart = int(N/10)
-	seed = data[seedstart:seedstart+max_time,:]
-	print(tabulate(seed))
-	samples = sample(seed, 1000)
-	samples = samples*data_max
-	# print(tabulate(samples))
-	np.savetxt('generated/l=' + str(cost) + '.csv', samples, delimiter=',')
+	
+	if epoch%write_every == 0:
+		seedstart = int(np.floor(np.random.rand()*N))
+		seed = data[seedstart:seedstart+max_time,:]
+		samples = sample(seed, sample_size)
+		samples = samples*data_max
+		# print(tabulate(samples))
+		np.savetxt(folder_name + '/l=' + str(smoothloss) + '.csv', samples, delimiter=',')
 
 
 # plt.imshow(np.transpose(samples), cmap='hot', interpolation='nearest')
