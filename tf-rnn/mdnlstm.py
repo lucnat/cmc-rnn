@@ -5,9 +5,32 @@ import tensorflow as tf
 from batchloader import BatchLoader
 from tabulate import tabulate
 import sys
+import os
 
 # Parse command line arguments
 csvfile = sys.argv[1]
+
+if '-folder' in sys.argv:
+	loadCheckpoint = True
+	index = sys.argv.index('-folder')
+	folder_name = sys.argv[index+1]
+	print('folder name: ' + folder_name)
+
+if '-checkpoint' in sys.argv:
+	loadCheckpoint = True
+	index = sys.argv.index('-checkpoint')
+	checkpoint_path = sys.argv[index+1]
+else:
+	loadCheckpoint = False
+
+
+# Make sure that folder structure exists
+if not os.path.exists(folder_name):
+    os.makedirs(folder_name)
+if not os.path.exists(folder_name+'/checkpoints'):
+    os.makedirs(folder_name+'/checkpoints')
+if not os.path.exists(folder_name+'/generated'):
+    os.makedirs(folder_name+'/generated')
 
 # Reading data
 print('reading data..')
@@ -15,24 +38,22 @@ data = np.genfromtxt(csvfile, delimiter=',')
 data_max = np.max(data)
 data = data/data_max
 
-
 # Parameters
-folder_name = 'fancynet'
 N = data.shape[0]		# data set size
 L = data.shape[1]		# amount of standard outputs if there was no mdn
-hidden_units = 256		# amount of hidden units
-hidden_layers = 6		# amount of hidden layers
-K = 20 				# amount of mixtures
-max_time = 60			# max time
-B_hat = N-max_time-1 		# total amount of batches
-B = 100  			# amount of batches to pass in one
+hidden_units = 512		# amount of hidden units
+hidden_layers = 5		# amount of hidden layers
+K = 20 					# amount of mixtures
+max_time = 50			# max time
+B_hat = N-max_time-1 	# total amount of batches
+B = 100  				# amount of batches to pass in one
 epochs = 1000		
-noise = 0.001
+noise = 0.1
 learning_rate = 0.00004
-sample_size = 600
-write_every = 3
+sample_size = 20	
+sample_every = 2		# sample every ?? epochs
+save_every = 2			# save model every ?? epochs
 
-print('folder name: ' + folder_name)
 print('--------------------------------- PARAMETERS ---------------------------------')
 print('N = ' + str(N) + ', L = ' + str(L) + ', K = ' + str(K) + 
 	', B = ' + str(B) + ', hidden_units = ' + str(hidden_units) + 
@@ -156,9 +177,16 @@ def sample(Seed, amount):
 	samples = samples
 	return samples
 
-# launch session
+# launch session, load checkpoint or initialize variables?
+
 sess = tf.Session()
-sess.run(tf.global_variables_initializer())
+saver = tf.train.Saver(max_to_keep=1)
+if loadCheckpoint:
+	print('loading model from checkpoint')
+	saver.restore(sess, checkpoint_path)
+else:
+	print('initializing a new model (no checkpoint was given)')
+	sess.run(tf.global_variables_initializer())
 
 # training
 print('starting training...')
@@ -174,16 +202,20 @@ for epoch in range(epochs):
 		_, cost,State = sess.run([train_op, loss, state],{x: inputs, y: targets})
 		cost = cost/B
 		smoothloss = 0.99*smoothloss + 0.01*cost
-		print('epoch = ' + str(epoch) + ', i = ' + str(i) + ' , smoothloss = ' + str(smoothloss))
+		print('epoch = ' + str(epoch) + ', i = ' + str(i) + ' , loss = ' + str(cost))
 	
-	if epoch%write_every == 0:
+	if epoch%sample_every == 0:
+		# sample from the model
 		seedstart = int(np.floor(np.random.rand()*N))
 		seed = data[seedstart:seedstart+max_time,:]
 		samples = sample(seed, sample_size)
 		samples = samples*data_max
-		# print(tabulate(samples))
-		np.savetxt(folder_name + '/l=' + str(smoothloss) + '.csv', samples, delimiter=',')
+		np.savetxt(folder_name + '/generated/l=' + str(smoothloss) + '.csv', samples, delimiter=',')
 
+	if epoch%save_every == 0:
+		# save the model
+		save_path = saver.save(sess, folder_name+'/checkpoints/E'+format(epoch,'04')+'L'+str(round(cost,2)))
+		print("Model saved in file: %s" % save_path)
 
 # plt.imshow(np.transpose(samples), cmap='hot', interpolation='nearest')
 # plt.show()
