@@ -23,7 +23,6 @@ if '-checkpoint' in sys.argv:
 else:
 	loadCheckpoint = False
 
-
 # Make sure that folder structure exists
 if not os.path.exists(folder_name):
     os.makedirs(folder_name)
