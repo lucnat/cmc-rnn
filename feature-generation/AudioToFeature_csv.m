@@ -4,10 +4,10 @@ clear, clc, close all
 fs=12000; 
 frametime=0.08; %zeitliche Aufl?sung in Sekunden
 overlap=0.6; %?berlappung der frames
-p=2; %psychoakustische redundanz (je grösser desto mehr reduktion)
+p=2; %psychoakustische redundanz (je grÃ¶sser desto mehr reduktion)
 red=0.8; %pvd reduktion (je kleiner desto mehr reduktion)
 
-%dimensionalityreduction (setze 1 für Aktivierung)
+%dimensionalityreduction (setze 1 fÃ¼r Aktivierung)
 psychoakustik=1;
 SVD=0;
 
@@ -18,6 +18,9 @@ Fs1-Fs2
 y1=sum(y1,2);
 y2=sum(y2,2);
 y=resample([y1;y2],fs,Fs1);
+
+%A-weighting-filter
+y = filterA(y, fs)
 
 
 %STFT erzeugen
