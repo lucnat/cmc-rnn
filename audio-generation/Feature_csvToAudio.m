@@ -45,6 +45,9 @@ h = floor(wlen*(1-overlap));
 nfft = wlen;
 [x_istft, t_istft] = istft(X, h, nfft, fs);
 
+% A-Filter anwenden
+x_istft = inverse_filterA(x,fs)
+
 % Spiele spektrogramminvertiertes Signal ab
 % sound(x_istft,fs);
 audiowrite('sampled.wav',x_istft,fs);
