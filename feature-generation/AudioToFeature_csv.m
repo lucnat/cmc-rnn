@@ -76,7 +76,7 @@ Totalereduktion=svdreduction*psychoreduction
 % imagesc(X)
 
 %Schreibe csv-feature
-csvwrite('features.csv',X);
+csvwrite('features.csv',X');
 csvwrite('size.csv',[S(1) Sr(1)]);
 
 
