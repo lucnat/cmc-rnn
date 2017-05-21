@@ -12,7 +12,7 @@ iterations = 40; %program is universal w.r.t. iteration
 filename='generated.wav';
 
 %read in features
-magspec_red=csvread('chopin_short_features.csv');
+magspec_red=csvread('chopin_short_features.csv')';
 
 %reconstruct the frequency resolution redundance magnitude spectrum
 magspec=reproduce(magspec_red,k,n);
