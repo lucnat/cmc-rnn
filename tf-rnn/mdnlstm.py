@@ -40,15 +40,15 @@ data = data/data_max
 # Parameters
 N = data.shape[0]		# data set size
 L = data.shape[1]		# amount of standard outputs if there was no mdn
-hidden_units = 512		# amount of hidden units
-hidden_layers = 5		# amount of hidden layers
-K = 20 					# amount of mixtures
+hidden_units = 128		# amount of hidden units
+hidden_layers = 3		# amount of hidden layers
+K = 7 					# amount of mixtures
 max_time = 50			# max time
 B_hat = N-max_time-1 	# total amount of batches
 B = 100  				# amount of batches to pass in one
 epochs = 1000		
-noise = 0.1
-learning_rate = 0.00004
+noise = 0.01
+learning_rate = 0.00001
 sample_size = 20	
 sample_every = 2		# sample every ?? epochs
 save_every = 2			# save model every ?? epochs
@@ -109,7 +109,7 @@ loss = tf.reduce_sum(loss, 1, keep_dims=True)
 loss = tf.reduce_sum(-tf.log(loss))
 
 # other branch of graph for predictions
-max_indices = tf.argmax(pi_k, 1)
+max_indices = tf.argmax(tf.div(pi_k, sigma_k), 1)
 
 train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
@@ -132,13 +132,15 @@ def meanOfMaxProb(all_mu, max_indices):
 		result[i, :] = all_mu[i, max_indices[i], :]
 	return result
 
-def meanByProb(all_mu, pi_i):
+def meanByProb(all_mu, pi_i, sigma_i):
 	B = all_mu.shape[0]
 	L = all_mu.shape[2]
 	result = np.zeros([B,L])
+	fractions = pi_i/sigma_i
+	normalizedFractions = fractions/np.sum(fractions, 1)
 	elements = np.linspace(0,K-1,K)
 	for i in range(B):
-		index = np.int8(np.random.choice(elements, 1, p=pi_i[i])[0])
+		index = np.int8(np.random.choice(elements, 1, p=normalizedFractions[i])[0])
 		result[i,:] = all_mu[i,index,:]
 	return result
 
@@ -168,7 +170,7 @@ def sample(Seed, amount):
 		mu_i 	= np.array(mu_i)
 		pi_i 	= np.array(pi_i)
 		sigma_i = np.array(sigma_i)
-		predictions = meanByProb(mu_i,pi_i)
+		predictions = meanByProb(mu_i,pi_i,sigma_i)
 		# seed = predictions
 		seed[0:-1,:] = seed[1:,:]
 		seed[-1,:] = predictions
@@ -209,7 +211,8 @@ for epoch in range(epochs):
 		seed = data[seedstart:seedstart+max_time,:]
 		samples = sample(seed, sample_size)
 		samples = samples*data_max
-		np.savetxt(folder_name + '/generated/l=' + str(smoothloss) + '.csv', samples, delimiter=',')
+		print(np.round(samples, decimals=1))
+		np.savetxt(folder_name + '/generated/l=' + str(smoothloss) + '.csv', np.round(samples, decimals=3), delimiter=',')
 
 	if epoch%save_every == 0:
 		# save the model
