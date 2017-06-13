@@ -144,7 +144,7 @@ def meanByProb(all_mu, pi_i, sigma_i):
 		result[i,:] = all_mu[i,index,:]
 	return result
 
-def distByProb(all_mu, pi_i, sgima_i):
+def distByProb(all_mu, pi_i, sigma_i):
 	result = np.zeros([N,L])
 	elements = np.linspace(0,K-1,K)
 	for i in range(all_mu.shape[0]):
