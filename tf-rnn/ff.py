@@ -1,3 +1,14 @@
+
+# Simple feed-forward neural network
+
+# Written by 
+# 	Luca Naterop
+# 	Sandro Giacomuzzi
+# as part of a semester project (AI music composition)
+# at ETH Zuerich, 2017
+
+# refer to README.md for usage
+
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf

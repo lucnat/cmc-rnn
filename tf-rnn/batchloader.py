@@ -1,7 +1,12 @@
-#
-# A very simple class to load batches
-# Written by Luca Naterop, Zuerich, 2016
-#
+
+# Written by 
+# 	Luca Naterop
+# 	Sandro Giacomuzzi
+# as part of a semester project (AI music composition)
+# at ETH Zuerich, 2017
+
+# refer to README.md for usage
+
 
 import math
 import numpy as np

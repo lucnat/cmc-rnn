@@ -1,6 +1,72 @@
+
+# Written by 
+# 	Luca Naterop
+# 	Sandro Giacomuzzi
+# as part of a semester project (AI music composition)
+# at ETH Zuerich, 2017
+
+# refer to README.md for usage
+
 import numpy as np
 import numpy.matlib
 import scipy.io.wavfile
+
+# helper functions used for sampling
+
+def create_batches(data, T):
+	N = data.shape[0]
+	B = N-1-T
+	L = data.shape[1]
+	inputs = np.zeros([B,T,L])
+	targets = np.zeros([B,L])
+	for i in range(0,B):
+		inputs[i,:,:] = data[i:i+T,:]
+		targets[i] = data[i+T,:]
+	return inputs, targets
+
+def meanOfMaxProb(all_mu, max_indices):
+	B = all_mu.shape[0]
+	L = all_mu.shape[2]
+	result = np.zeros([B,L])
+	for i in range(B):
+		result[i, :] = all_mu[i, max_indices[i], :]
+	return result
+
+def meanByProb(all_mu, pi_i, sigma_i):
+	K = sigma_i.shape[1]
+	B = all_mu.shape[0]
+	L = all_mu.shape[2]
+	result = np.zeros([B,L])
+	fractions = pi_i/sigma_i
+	normalizedFractions = fractions/np.sum(fractions, 1)
+	elements = np.linspace(0,K-1,K)
+	for i in range(B):
+		index = np.int8(np.random.choice(elements, 1, p=normalizedFractions[i])[0])
+		result[i,:] = all_mu[i,index,:]
+	return result
+
+def distByProb(all_mu, pi_i, sgima_i):
+	result = np.zeros([N,L])
+	elements = np.linspace(0,K-1,K)
+	for i in range(all_mu.shape[0]):
+		index = np.random.choice(elements, 1, p=pi_i[i])[0]
+		result[i] = np.random.normal()*sigma_i[i, index] + all_mu[i,index]
+	return result
+
+def printAsCSV(data):
+	# data must be 2D numpy array
+	# prints it row by row in csv format
+	for i in range(data.shape[0]):
+		line = str(data[i,0])
+		for j in range(1,data.shape[1]):
+			line += ', ' + str(data[i,j])
+		print(line)
+
+
+
+
+
+# helper functions used for spectrogram inversion (which does not work yet in python)
 
 def reproduce(X,k,n): 
 	s = X.shape
@@ -98,8 +164,3 @@ def writeAudioFromSamples(X):
 	filtered = inverseAFilter(x_istft, fs)
 	filtered = np.reshape(filtered, [filtered.shape[0]])
 	scipy.io.wavfile.write('mit.wav',fs,x_istft)
-
-# # test
-x = np.genfromtxt('test.csv', delimiter=',')
-# x = inverseAFilter(x,44100)
-scipy.io.wavfile.write('test.wav',44100,x)

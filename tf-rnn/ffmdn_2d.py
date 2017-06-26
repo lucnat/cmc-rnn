@@ -1,3 +1,15 @@
+
+# A simple multi-dimensional mixture density network attached to a feed forward network
+
+# Written by 
+# 	Luca Naterop
+# 	Sandro Giacomuzzi
+# as part of a semester project (AI music composition)
+# at ETH Zuerich, 2017
+
+# refer to README.md for usage
+
+
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
