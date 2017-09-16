@@ -11,6 +11,7 @@ This repo is the code of an ETH project from Luca Naterop and Sandro Giacomuzzi 
 
 `/char-rnn-results`: contains sample text of 100'000 characters generated from those networks as well as the corresponding checkpoints that allows you to generate more text. 
 
+`/Latest_AudioFeature`: MATLAB scripts to generate spectrogram csv files from Audio and vice versa
 
 ## Links
 Paper (Work in Progress): https://www.overleaf.com/read/cnkdtvbtfsyd
