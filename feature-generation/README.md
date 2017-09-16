@@ -1,1 +1,0 @@
-In 'Testscript.m' wird ein 'Bach1.mp3' eingelesen und die Features in 'features.csv' abgespeichert. 

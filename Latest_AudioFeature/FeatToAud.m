@@ -13,7 +13,7 @@ filename='generated.wav';
 
 %read in feature
 disp('reading csv...');
-magspec_red=csvread('chopin_small.csv')';
+magspec_red=csvread('sound.csv')';
 
 %reconstruct the frequency resolution redundance magnitude spectrum
 disp('reconstruction...');
