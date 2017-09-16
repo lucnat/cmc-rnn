@@ -2,28 +2,17 @@
 
 This repo is the code of an ETH project from Luca Naterop and Sandro Giacomuzzi which aims to synthesize Audio with LSTMs. 
 
-## Run the Code yourself
 
-Navigate to the folder `/csv-rnn` and you will find there among others the files `train.lua` and `sample.lua`. You can now train the 
-net by running
+`/tf-rnn`: The main code of this project
 
-`th train.lua -csv_file bounce.csv`
+`/csv-rnn`: Torch LSTM implementation in 
 
-The parameters (network size, amount of layers etc.) can be set within the code. The code will write
-state files of the network's state every 200 iterations. In order to sample from the model, simply do
+`/char-rnn`: The code for a character language model in torch which was trained with Darwin and the Koran.
 
-`th sample.lua -state_file epoch24loss0.01362422014985.net -input_dimension 8 -length 1000 > out.csv`
+`/char-rnn-results`: contains sample text of 100'000 characters generated from those networks as well as the corresponding checkpoints that allows you to generate more text. 
 
-This is going to write a csv file of 1000 generated vectors of size 8 (this has to be the size the 
-network has actually been trained with). 
-Enjoy the ride!
-
-## char-rnn experiments
-
-Using the code in `char-rnn` we trained the network with the Koran and with "The Origin Of Species". `/char-rnn-results` contains sample text of 100'000 characters generated from those networks as well as the corresponding checkpoints that allows you to generate more text. 
 
 ## Links
-
 Paper (Work in Progress): https://www.overleaf.com/read/cnkdtvbtfsyd
 
 Research Plan: https://www.overleaf.com/3808219jvshrb
